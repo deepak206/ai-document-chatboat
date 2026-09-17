@@ -5,8 +5,8 @@ dotenv.config({
   path: path.resolve(process.cwd(), ".env"),
 });
 
-export const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+export const MONGODB_URI = process.env.MONGODB_URI;
 
-if (!OPENAI_API_KEY) {
-  throw new Error("OPENAI_API_KEY is not loaded from .env");
+if (!MONGODB_URI) {
+  throw new Error("MONGODB_URI is not loaded from .env");
 }
