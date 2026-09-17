@@ -1,80 +1,182 @@
 # 🤖 AI Document Chatbot
 
-An AI-powered document chatbot built with **React, TypeScript, Node.js, Express, and OpenAI**.
+An AI-powered document chatbot built with **React, TypeScript, Node.js,
+Express, Ollama, and MongoDB**.
 
-The project allows users to upload a PDF document and ask questions about its contents through a modern chat interface. The current implementation extracts text from uploaded PDFs and uses that content as context for AI-generated answers. The next stage is to evolve this into a complete **RAG (Retrieval-Augmented Generation)** pipeline.
+The application allows users to upload PDF documents and ask questions
+about their contents through a modern chat interface. The project is
+being developed step by step into a complete **RAG (Retrieval-Augmented
+Generation)** application using local AI models with Ollama.
+
+------------------------------------------------------------------------
 
 ## ✨ Features
 
-- 📄 Upload PDF documents
-- 🔍 Extract text from PDFs
-- 💬 Modern interactive chat interface
-- 🤖 Ask questions about uploaded documents
-- 🧠 Document-grounded AI answers
-- 🚫 Avoid inventing information not present in the document
-- ⚡ React + Vite frontend
-- 🚀 Node.js + Express backend
-- 🔐 Environment-based OpenAI API configuration
-- 🧩 Architecture prepared for RAG
+-   📄 Upload PDF documents
+-   🔍 Extract text from PDFs
+-   ✂️ Split documents into smaller chunks
+-   🧠 Generate embeddings using Ollama
+-   💾 Store chunks and embeddings in MongoDB
+-   🔎 Semantic similarity search
+-   💬 Modern interactive chat interface
+-   🤖 Local AI responses using Ollama
+-   🚫 Avoid answers that are not supported by document context
+-   ⚡ React + Vite frontend
+-   🚀 Node.js + Express backend
+-   🧩 Modular backend architecture
+-   🔐 Environment-based configuration
+
+------------------------------------------------------------------------
 
 ## 🏗️ Current Architecture
 
-```text
-React + TypeScript
-        │
-        │ HTTP / JSON / FormData
-        ▼
-Node.js + Express
-        │
-   ┌────┴────┐
-   ▼         ▼
-PDF Parser  OpenAI API
-   │         │
-   └────┬────┘
-        ▼
-   AI-generated
-      Answer
+``` text
+                         React + TypeScript
+                                │
+                                │ HTTP
+                                ▼
+                         Node.js + Express
+                                │
+                ┌───────────────┴───────────────┐
+                │                               │
+                ▼                               ▼
+       documentRoutes.ts                  chatRoutes.ts
+                │                               │
+                ▼                               ▼
+          PDF Processing                 searchService.ts
+                │                               │
+                ▼                               ▼
+           Text Chunks                   Question Embedding
+                │                               │
+                ▼                               ▼
+      Ollama Embedding Model                  MongoDB
+                │                               │
+                ▼                               ▼
+             Embeddings                  Relevant Chunks
+                │                               │
+                └───────────────┬───────────────┘
+                                ▼
+                         Ollama Chat Model
+                                │
+                                ▼
+                             Answer
 ```
+
+------------------------------------------------------------------------
+
+## 🧠 RAG Flow
+
+The application follows the Retrieval-Augmented Generation pattern:
+
+``` text
+PDF
+ ↓
+Extract Text
+ ↓
+Chunk Text
+ ↓
+Generate Embeddings with Ollama
+ ↓
+Store Chunks + Embeddings in MongoDB
+ ↓
+                         User Question
+                                ↓
+                    Generate Question Embedding
+                                ↓
+                       Similarity Search
+                                ↓
+                      Relevant PDF Chunks
+                                ↓
+                       Build Context
+                                ↓
+                       Ollama Chat Model
+                                ↓
+                             Answer
+```
+
+The important idea is that the complete PDF does not need to be sent to
+the LLM for every question. The application first retrieves the most
+relevant chunks and then provides those chunks as context to the local
+chat model.
+
+------------------------------------------------------------------------
 
 ## 🛠️ Tech Stack
 
 ### Frontend
-- React
-- TypeScript
-- Vite
-- CSS
-- Fetch API
+
+-   React
+-   TypeScript
+-   Vite
+-   CSS
+-   Fetch API
 
 ### Backend
-- Node.js
-- Express.js
-- TypeScript
-- Multer
-- pdf-parse
-- CORS
-- dotenv
+
+-   Node.js
+-   Express.js
+-   TypeScript
+-   Multer
+-   pdf-parse
+-   CORS
+-   dotenv
+-   Mongoose
 
 ### AI
-- OpenAI API
 
-### Planned
-- Embeddings
-- Vector database
-- Semantic search
-- RAG pipeline
-- MongoDB / vector search
-- Document and conversation persistence
+-   Ollama
+-   Chat model: `llama3.2:3b`
+-   Embedding model: `nomic-embed-text`
+
+> If you use different Ollama models locally, update the model names in
+> the backend configuration.
+
+### Database
+
+-   MongoDB
+-   Mongoose
+
+### RAG Concepts
+
+-   Text chunking
+-   Embeddings
+-   Vector representations
+-   Cosine similarity
+-   Semantic search
+-   Retrieval-Augmented Generation (RAG)
+
+------------------------------------------------------------------------
 
 ## 📁 Project Structure
 
-```text
+``` text
 ai-document-chat/
 │
 ├── backend/
 │   ├── src/
+│   │   ├── config/
+│   │   │   ├── database.ts
+│   │   │   └── env.ts
+│   │   │
+│   │   ├── models/
+│   │   │   └── DocumentChunk.ts
+│   │   │
+│   │   ├── routes/
+│   │   │   ├── chatRoutes.ts
+│   │   │   └── documentRoutes.ts
+│   │   │
+│   │   ├── services/
+│   │   │   ├── documentRepository.ts
+│   │   │   ├── embeddingService.ts
+│   │   │   ├── ollamaService.ts
+│   │   │   └── searchService.ts
+│   │   │
 │   │   ├── utils/
-│   │   │   └── chunkText.ts
+│   │   │   ├── chunkText.ts
+│   │   │   └── similarity.ts
+│   │   │
 │   │   └── server.ts
+│   │
 │   ├── .env
 │   ├── package.json
 │   └── tsconfig.json
@@ -92,100 +194,228 @@ ai-document-chat/
 └── README.md
 ```
 
+------------------------------------------------------------------------
+
 ## ⚙️ Prerequisites
 
-Install:
+Install the following:
 
-- Node.js (current LTS recommended)
-- npm
-- OpenAI API key
+-   Node.js
+-   npm
+-   Ollama
+-   MongoDB Atlas account or local MongoDB
 
-Check versions:
+Check Node.js and npm:
 
-```bash
+``` bash
 node -v
 npm -v
 ```
+
+Check Ollama:
+
+``` bash
+ollama --version
+```
+
+------------------------------------------------------------------------
+
+## 🦙 Ollama Setup
+
+This project uses Ollama for local AI inference instead of OpenAI's
+cloud API.
+
+Check installed models:
+
+``` bash
+ollama list
+```
+
+Install the embedding model:
+
+``` bash
+ollama pull nomic-embed-text
+```
+
+Install the chat model:
+
+``` bash
+ollama pull llama3.2:3b
+```
+
+Verify:
+
+``` bash
+ollama list
+```
+
+You should see your installed models, for example:
+
+``` text
+NAME
+llama3.2:3b
+nomic-embed-text
+```
+
+Ollama normally exposes its local API at:
+
+``` text
+http://127.0.0.1:11434
+```
+
+------------------------------------------------------------------------
+
+## 🗄️ MongoDB Setup
+
+The application stores document chunks and their embeddings in MongoDB.
+
+Create a MongoDB database, for example:
+
+``` text
+ai-document-chat
+```
+
+Then obtain your MongoDB connection string.
+
+Example:
+
+``` text
+mongodb+srv://USERNAME:PASSWORD@cluster.mongodb.net/ai-document-chat
+```
+
+Do not commit the connection string to Git.
+
+The current document chunk data contains:
+
+-   `documentName`
+-   `chunkIndex`
+-   `text`
+-   `embedding`
+-   timestamps
+
+------------------------------------------------------------------------
+
+## 🔐 Environment Variables
+
+Create:
+
+``` text
+backend/.env
+```
+
+Add:
+
+``` env
+MONGODB_URI=your_mongodb_connection_string
+```
+
+Ollama runs locally, so an OpenAI API key is not required for the
+current implementation.
+
+**Never commit `.env` to Git.**
+
+------------------------------------------------------------------------
 
 ## 🚀 Getting Started
 
 ### 1. Clone the repository
 
-```bash
+``` bash
 git clone <YOUR_GITHUB_REPOSITORY_URL>
 cd ai-document-chat
 ```
 
 ### 2. Install backend dependencies
 
-```bash
+``` bash
 cd backend
 npm install
 ```
 
-### 3. Configure environment variables
+Make sure Ollama's Node.js package is installed:
+
+``` bash
+npm install ollama
+```
+
+### 3. Start Ollama
+
+Make sure Ollama is running and the required models are available:
+
+``` bash
+ollama list
+```
+
+### 4. Configure MongoDB
 
 Create:
 
-```text
+``` text
 backend/.env
 ```
 
-Add:
+and add:
 
-```env
-OPENAI_API_KEY=your_openai_api_key
+``` env
+MONGODB_URI=your_mongodb_connection_string
 ```
 
-**Never commit `.env` to Git.**
-
-### 4. Start the backend
+### 5. Start the backend
 
 From the `backend` folder:
 
-```bash
+``` bash
 npm run dev
 ```
 
 Backend:
 
-```text
+``` text
 http://localhost:5000
 ```
 
-### 5. Install frontend dependencies
+### 6. Install frontend dependencies
 
 Open another terminal:
 
-```bash
+``` bash
 cd frontend
 npm install
 ```
 
-### 6. Start the frontend
+### 7. Start the frontend
 
-```bash
+``` bash
 npm run dev
 ```
 
 Frontend:
 
-```text
+``` text
 http://localhost:5173
 ```
 
+------------------------------------------------------------------------
+
 ## 📄 Using the Chatbot
 
-1. Open the frontend.
-2. Upload a PDF document.
-3. Wait for the document to be processed.
-4. Ask a question about the document.
-5. The backend sends the document context and question to the AI.
-6. The chatbot returns an answer based on the document.
+1.  Open the frontend.
+2.  Upload a PDF document.
+3.  The backend extracts the PDF text.
+4.  The text is divided into smaller chunks.
+5.  Ollama generates an embedding for each chunk.
+6.  Chunks and embeddings are stored in MongoDB.
+7.  Ask a question about the document.
+8.  Ollama generates an embedding for the question.
+9.  The application compares the question embedding with stored chunk
+    embeddings.
+10. The most relevant chunks are retrieved.
+11. The relevant chunks are sent as context to the Ollama chat model.
+12. The chatbot returns the answer.
 
 Example:
 
-```text
+``` text
 Question:
 How many annual paid leave days do employees receive?
 
@@ -193,19 +423,26 @@ Answer:
 Employees receive 18 annual paid leave days.
 ```
 
-If the document does not contain the requested information, the chatbot should indicate that it could not find the information in the uploaded document.
+If the information is not present in the retrieved document context, the
+chatbot should respond:
+
+``` text
+I couldn't find that information in the uploaded document.
+```
+
+------------------------------------------------------------------------
 
 ## 🔌 API Endpoints
 
 ### Health Check
 
-```http
+``` http
 GET /
 ```
 
 Example response:
 
-```json
+``` json
 {
   "message": "AI Document Chat API is running"
 }
@@ -213,184 +450,362 @@ Example response:
 
 ### Upload Document
 
-```http
+``` http
 POST /api/upload
 ```
 
 Content type:
 
-```text
+``` text
 multipart/form-data
 ```
 
 Form field:
 
-```text
+``` text
 document
 ```
 
-The endpoint receives the PDF, extracts its text, and returns document information.
+Processing flow:
+
+``` text
+PDF
+ ↓
+Extract Text
+ ↓
+Create Chunks
+ ↓
+Generate Ollama Embeddings
+ ↓
+Save Chunks + Embeddings to MongoDB
+```
 
 Example response:
 
-```json
+``` json
 {
   "message": "Document uploaded successfully",
   "filename": "company-handbook.pdf",
   "pages": 10,
-  "text": "..."
+  "chunks": 12
 }
 ```
 
 ### Chat
 
-```http
+``` http
 POST /api/chat
 ```
 
 Example request:
 
-```json
+``` json
 {
-  "message": "What are the company's working hours?",
-  "documentText": "..."
+  "message": "What are the company's working hours?"
 }
+```
+
+Processing flow:
+
+``` text
+Question
+ ↓
+Question Embedding
+ ↓
+Similarity Search
+ ↓
+Relevant Chunks
+ ↓
+Build Context
+ ↓
+Ollama Chat Model
+ ↓
+Answer
 ```
 
 Example response:
 
-```json
+``` json
 {
   "answer": "The company's working hours are 9:30 AM to 6:30 PM, Monday through Friday."
 }
 ```
 
+### Development Test Endpoints
+
+During development, the project may also contain:
+
+``` http
+GET /api/test-ollama
+```
+
+Tests communication between Node.js and Ollama.
+
+``` http
+GET /api/test-embedding
+```
+
+Tests the local embedding model.
+
+``` http
+GET /api/test-search
+```
+
+Tests semantic similarity search.
+
+These endpoints are intended for development and can be removed or
+protected before production.
+
+------------------------------------------------------------------------
+
+## 🧩 Backend Architecture
+
+The backend separates responsibilities into routes, services, models,
+utilities, and configuration.
+
+### Routes
+
+``` text
+routes/
+├── chatRoutes.ts
+└── documentRoutes.ts
+```
+
+Routes handle HTTP requests and delegate business logic to services.
+
+### Services
+
+``` text
+services/
+├── documentRepository.ts
+├── embeddingService.ts
+├── ollamaService.ts
+└── searchService.ts
+```
+
+Responsibilities:
+
+-   `ollamaService.ts` → communicates with Ollama
+-   `embeddingService.ts` → generates embeddings
+-   `searchService.ts` → finds relevant document chunks
+-   `documentRepository.ts` → reads and writes chunks in MongoDB
+
+### Models
+
+``` text
+models/
+└── DocumentChunk.ts
+```
+
+Defines the MongoDB schema for document chunks and embeddings.
+
+### Utilities
+
+``` text
+utils/
+├── chunkText.ts
+└── similarity.ts
+```
+
+Responsibilities:
+
+-   `chunkText.ts` → splits document text into smaller chunks
+-   `similarity.ts` → calculates cosine similarity
+
+------------------------------------------------------------------------
+
+## 🧠 Embeddings
+
+An embedding converts text into a numerical vector that represents its
+semantic meaning.
+
+For example:
+
+``` text
+"How many vacation days do employees get?"
+```
+
+and:
+
+``` text
+"Employees receive 18 annual paid leave days."
+```
+
+use different words but have related meaning.
+
+The embedding model helps the application identify this semantic
+relationship.
+
+The same embedding model should be used for both:
+
+``` text
+Document chunks
+       +
+User questions
+```
+
+This project uses:
+
+``` text
+nomic-embed-text
+```
+
+for embeddings.
+
+------------------------------------------------------------------------
+
+## 🔎 Semantic Search
+
+The current learning implementation uses cosine similarity.
+
+For every stored chunk:
+
+``` text
+Question Vector
+      ↓
+Compare
+      ↓
+Chunk Vector
+      ↓
+Similarity Score
+```
+
+The chunks are sorted by similarity score and the top results are
+selected.
+
+Example:
+
+``` text
+Chunk A → 0.91
+Chunk B → 0.74
+Chunk C → 0.52
+Chunk D → 0.21
+```
+
+The highest-ranking chunks become the context provided to the Ollama
+chat model.
+
+------------------------------------------------------------------------
+
 ## 🧠 RAG Roadmap
 
-### Current implementation
+### Completed
 
-```text
-PDF
- ↓
-Extract Text
- ↓
-Send Document Text + Question
- ↓
-OpenAI
- ↓
-Answer
-```
+-   [x] React chat interface
+-   [x] Node.js / Express backend
+-   [x] PDF upload
+-   [x] PDF text extraction
+-   [x] Text chunking
+-   [x] Ollama chat integration
+-   [x] Ollama embedding integration
+-   [x] MongoDB connection
+-   [x] MongoDB document chunk model
+-   [x] Store chunks and embeddings
+-   [x] Cosine similarity
+-   [x] Semantic search
+-   [x] Retrieve relevant chunks
+-   [x] RAG context preparation
+-   [x] Separate API route files
 
-### Target RAG implementation
+### Next Steps
 
-```text
-PDF
- ↓
-Extract Text
- ↓
-Chunk Document
- ↓
-Generate Embeddings
- ↓
-Store Embeddings
- ↓
-User Question
- ↓
-Generate Question Embedding
- ↓
-Semantic Similarity Search
- ↓
-Retrieve Relevant Chunks
- ↓
-OpenAI
- ↓
-Answer
-```
+-   [ ] Replace application-level similarity search with MongoDB Vector
+    Search
+-   [ ] Add document/page metadata
+-   [ ] Add source citations to answers
+-   [ ] Support multiple documents
+-   [ ] Isolate searches by document
+-   [ ] Store chat history
+-   [ ] Improve chunking strategy
+-   [ ] Add streaming Ollama responses
+-   [ ] Add authentication
+-   [ ] Add file validation and size limits
+-   [ ] Add automated tests
+-   [ ] Improve logging and monitoring
+-   [ ] Dockerize the application
+-   [ ] Deploy frontend and backend
 
-### Development Checklist
-
-- [x] React chat interface
-- [x] Node.js / Express backend
-- [x] OpenAI API integration
-- [x] PDF upload
-- [x] PDF text extraction
-- [x] Document-aware chat
-- [x] Basic text chunking
-- [ ] Generate document embeddings
-- [ ] Store embeddings
-- [ ] Implement semantic similarity search
-- [ ] Retrieve top relevant chunks
-- [ ] Build complete RAG pipeline
-- [ ] Add MongoDB / vector search
-- [ ] Store documents
-- [ ] Store chat history
-- [ ] Improve document processing
-- [ ] Add authentication
-- [ ] Deploy frontend and backend
+------------------------------------------------------------------------
 
 ## 🔐 Security
 
-Never expose your OpenAI API key in the React frontend.
+Ollama is currently running locally, so the React frontend should
+communicate with the Node.js backend rather than directly with Ollama.
 
-Use:
-
-```text
+``` text
 Frontend
    ↓
-Backend
+Node.js Backend
    ↓
-OpenAI API
+Ollama
 ```
 
-Keep the API key in:
+Keep MongoDB credentials in:
 
-```text
+``` text
 backend/.env
 ```
 
+Never expose database credentials in the React frontend.
+
 Recommended `.gitignore`:
 
-```gitignore
+``` gitignore
 node_modules/
 .env
 dist/
 ```
 
+For production, consider:
+
+-   authentication
+-   authorization
+-   file type validation
+-   upload size limits
+-   rate limiting
+-   MongoDB access controls
+-   prompt/context validation
+-   logging and monitoring
+
+------------------------------------------------------------------------
+
 ## 🧪 Suggested Test Questions
 
-After uploading a company handbook, try:
+After uploading the company handbook, try:
 
-```text
+``` text
 What is NovaTech Solutions?
 ```
 
-```text
+``` text
 What are the company's working hours?
 ```
 
-```text
+``` text
 How many annual paid leave days do employees receive?
 ```
 
-```text
+``` text
 How many sick leave days are provided?
 ```
 
-```text
+``` text
 What is the remote work policy?
 ```
 
-```text
+``` text
 What technologies does the company use?
 ```
 
-Also test something that is not in the PDF:
+Also test information that is not in the PDF:
 
-```text
+``` text
 Who is the CEO?
 ```
 
 The chatbot should not invent an answer.
+
+------------------------------------------------------------------------
 
 ## 🎯 Learning Objectives
 
@@ -398,70 +813,88 @@ This project is designed as a hands-on Generative AI learning project.
 
 You will learn:
 
-- LLM API integration
-- AI application architecture
-- PDF document processing
-- Text chunking
-- Embeddings
-- Vector similarity
-- Semantic search
-- Retrieval-Augmented Generation (RAG)
-- Vector databases
-- Prompt design
-- Full-stack AI development
-- Production considerations for AI applications
+-   Local LLM integration with Ollama
+-   AI application architecture
+-   PDF document processing
+-   Text chunking
+-   Embeddings
+-   Vector representations
+-   Cosine similarity
+-   Semantic search
+-   Retrieval-Augmented Generation (RAG)
+-   MongoDB persistence
+-   Vector databases
+-   Prompt design
+-   Full-stack AI development
+-   Production considerations for AI applications
+
+------------------------------------------------------------------------
 
 ## 🚧 Future Improvements
 
 Potential enhancements:
 
-- Multiple document uploads
-- Drag-and-drop PDF upload
-- Document library
-- Streaming AI responses
-- Conversation history
-- Source citations
-- Source-text highlighting
-- Authentication
-- User-specific document collections
-- MongoDB persistence
-- Vector search
-- Cloud deployment
-- Rate limiting
-- File validation
-- Improved error handling
-- Logging and observability
+-   Multiple document uploads
+-   Drag-and-drop PDF upload
+-   Document library
+-   Streaming Ollama responses
+-   Conversation history
+-   Source citations
+-   Source-text highlighting
+-   Authentication
+-   User-specific document collections
+-   MongoDB Vector Search
+-   Better chunking with page/section metadata
+-   Hybrid search
+-   Reranking
+-   Cloud deployment
+-   Rate limiting
+-   File validation
+-   Improved error handling
+-   Logging and observability
+
+------------------------------------------------------------------------
 
 ## 📌 Project Goal
 
-The goal is to evolve this project from a simple **PDF + LLM chatbot** into a production-style **Generative AI Document Assistant** using Retrieval-Augmented Generation.
+The goal is to evolve this project from a simple **PDF + local LLM
+chatbot** into a production-style **Generative AI Document Assistant**
+using Retrieval-Augmented Generation.
 
-```text
-              AI DOCUMENT ASSISTANT
-                       │
-          ┌────────────┴────────────┐
-          │                         │
-      Documents                  Chat UI
-          │                         │
-      Chunking                   Questions
-          │                         │
-     Embeddings                      │
-          │                         │
-    Vector Search ◄─────────────────┘
-          │
-    Relevant Context
-          │
-        LLM API
-          │
-        Answer
+``` text
+                  AI DOCUMENT ASSISTANT
+
+                           │
+             ┌─────────────┴─────────────┐
+             │                           │
+         Documents                    Chat UI
+             │                           │
+         Extraction                  Questions
+             │                           │
+         Chunking                        │
+             │                           │
+        Embeddings                       │
+             │                           │
+       MongoDB Storage ◄─────────────────┘
+             │
+       Vector Search
+             │
+      Relevant Context
+             │
+        Ollama LLM
+             │
+           Answer
 ```
+
+------------------------------------------------------------------------
 
 ## 👨‍💻 Author
 
 **Deepak Mankotia**
 
-Full-Stack Developer | Generative AI | React | TypeScript | Node.js
+Full-Stack Developer \| Generative AI \| React \| TypeScript \| Node.js
 
----
+------------------------------------------------------------------------
 
-⭐ If you find this project useful, consider giving the repository a star.
+⭐ If you find this project useful, consider giving the repository a
+star.
