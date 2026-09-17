@@ -8,6 +8,7 @@ import { PDFParse } from "pdf-parse";
 import { chunkText } from "./utils/chunkText";
 import { generateEmbedding } from "./services/embeddingService";
 import { storeChunks } from "./services/documentStore";
+import { searchSimilarChunks } from "./services/searchService";
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -32,54 +33,64 @@ app.get("/", (req, res) => {
 
 
 app.post("/api/chat", async (req, res) => {
-    try {
-      const { message, documentText } = req.body;
-  
-      if (!message) {
-        return res.status(400).json({
-          error: "Message is required",
-        });
-      }
-  
-      let input = message;
-  
-      if (documentText) {
-        input = `
-  You are an AI assistant that answers questions about a company document.
-  
-  Use the document below to answer the user's question.
-  
-  IMPORTANT RULES:
-  - Answer using only information contained in the document.
-  - If the answer cannot be found in the document, say:
-    "I couldn't find that information in the uploaded document."
-  - Do not make up information.
-  - Keep the answer clear and concise.
-  
-  COMPANY DOCUMENT:
-  ${documentText}
-  
-  USER QUESTION:
-  ${message}
-  `;
-      }
-  
-      const response = await openai.responses.create({
-        model: "gpt-5.6-luna",
-        input,
-      });
-  
-      res.json({
-        answer: response.output_text,
-      });
-    } catch (error: any) {
-      console.error("OPENAI ERROR:", error);
-  
-      res.status(500).json({
-        error: error?.message || "Something went wrong",
+  try {
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({
+        error: "Message is required",
       });
     }
-  });
+
+    // 1. Search the uploaded document
+    const relevantChunks = await searchSimilarChunks(message, 3);
+
+    console.log("Relevant chunks:", relevantChunks);
+
+    // 2. Combine the relevant chunks into context
+    const context = relevantChunks
+      .map((chunk) => chunk.text)
+      .join("\n\n---\n\n");
+
+    // 3. Create the prompt for the AI
+    const input = `
+You are an AI assistant that answers questions about a company document.
+
+Use ONLY the information provided in the document context below.
+
+Rules:
+- Answer using only the provided context.
+- Do not make up information.
+- If the answer is not present in the context, say:
+  "I couldn't find that information in the uploaded document."
+- Keep the answer clear and concise.
+
+DOCUMENT CONTEXT:
+${context}
+
+USER QUESTION:
+${message}
+`;
+
+    // 4. Ask the AI
+    const response = await openai.responses.create({
+      model: "gpt-5.6-luna",
+      input,
+    });
+
+    // 5. Return the answer
+    res.json({
+      answer: response.output_text,
+    });
+
+  } catch (error: any) {
+    console.error("CHAT ERROR:", error);
+
+    res.status(500).json({
+      error: error?.message || "Something went wrong",
+    });
+  }
+});
   
 
   app.post("/api/upload", upload.single("document"), async (req, res) => {
@@ -157,6 +168,30 @@ app.post("/api/chat", async (req, res) => {
   
       res.status(500).json({
         error: error?.message || "Embedding generation failed",
+      });
+    }
+  });
+
+  app.get("/api/test-search", async (req, res) => {
+    try {
+      const query =
+        "How many annual paid leave days do employees get?";
+  
+      const results = await searchSimilarChunks(query, 3);
+  
+      res.json({
+        query,
+        results: results.map((item) => ({
+          id: item.id,
+          score: item.score,
+          text: item.text,
+        })),
+      });
+    } catch (error: any) {
+      console.error("SEARCH ERROR:", error);
+  
+      res.status(500).json({
+        error: error?.message || "Search failed",
       });
     }
   });
