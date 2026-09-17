@@ -1,15 +1,17 @@
+import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
 import OpenAI from "openai";
-import dotenv from "dotenv";
+
 import multer from "multer";
 import { PDFParse } from "pdf-parse";
 import { chunkText } from "./utils/chunkText";
+import { generateEmbedding } from "./services/embeddingService";
+import { storeChunks } from "./services/documentStore";
 
 const upload = multer({
   storage: multer.memoryStorage(),
 });
-
 dotenv.config();
 
 const app = express();
@@ -78,6 +80,8 @@ app.post("/api/chat", async (req, res) => {
       });
     }
   });
+  
+
   app.post("/api/upload", upload.single("document"), async (req, res) => {
     try {
       if (!req.file) {
@@ -91,27 +95,68 @@ app.post("/api/chat", async (req, res) => {
       });
   
       const result = await parser.getText();
-
-    const chunks = chunkText(result.text);
-
-    console.log("Total chunks:", chunks.length);
-
-    console.log("First chunk:");
-    console.log(chunks[0]);
-
-    await parser.destroy();
+  
+      const chunks = chunkText(result.text);
+  
+      console.log("Total chunks:", chunks.length);
+  
+      const documentChunks = [];
+  
+      for (let i = 0; i < chunks.length; i++) {
+        console.log(
+          `Generating embedding ${i + 1}/${chunks.length}`
+        );
+  
+        const embedding = await generateEmbedding(chunks[i]);
+  
+        documentChunks.push({
+          id: i,
+          text: chunks[i],
+          embedding,
+        });
+      }
+  
+      storeChunks(documentChunks);
+  
+      console.log(
+        "Document embeddings stored:",
+        documentChunks.length
+      );
+  
+      await parser.destroy();
   
       res.json({
         message: "Document uploaded successfully",
         filename: req.file.originalname,
         pages: result.total,
         text: result.text,
+        chunks: chunks.length,
       });
     } catch (error) {
       console.error("PDF ERROR:", error);
   
       res.status(500).json({
         error: "Failed to process PDF",
+      });
+    }
+  });
+
+  app.get("/api/test-embedding", async (req, res) => {
+    try {
+      const text = "Employees receive 18 annual paid leave days.";
+  
+      const embedding = await generateEmbedding(text);
+  
+      res.json({
+        text,
+        dimensions: embedding.length,
+        embedding: embedding.slice(0, 10),
+      });
+    } catch (error: any) {
+      console.error("EMBEDDING ERROR:", error);
+  
+      res.status(500).json({
+        error: error?.message || "Embedding generation failed",
       });
     }
   });
