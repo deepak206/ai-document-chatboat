@@ -5,11 +5,17 @@ import { PDFParse } from "pdf-parse";
 import { chunkText } from "../utils/chunkText";
 import { generateEmbedding } from "../services/embeddingService";
 import { saveDocumentChunks } from "../services/documentRepository";
+
+import {
+  createDocument,
+} from "../services/documentManagementRepository";
+
 const router = Router();
 
 const upload = multer({
   storage: multer.memoryStorage(),
 });
+
 
 router.post(
   "/upload",
@@ -22,9 +28,16 @@ router.post(
         });
       }
 
-      console.log("Processing:", req.file.originalname);
+      console.log(
+        "Processing:",
+        req.file.originalname
+      );
 
+
+      // ==========================================
       // 1. Extract PDF text
+      // ==========================================
+
       const parser = new PDFParse({
         data: req.file.buffer,
       });
@@ -35,53 +48,133 @@ router.post(
 
       console.log("PDF text extracted");
 
-      // 2. Split text into chunks
+
+      // ==========================================
+      // 2. Create chunks
+      // ==========================================
+
       const chunks = chunkText(result.text);
 
-      console.log("Total chunks:", chunks.length);
+      console.log(
+        "Total chunks:",
+        chunks.length
+      );
 
-      // 3. Create a unique document ID
-      const documentId = `${Date.now()}-${req.file.originalname}`;
+
+      // ==========================================
+      // 3. Generate document ID
+      // ==========================================
+
+      const documentId =
+        `${Date.now()}-${req.file.originalname}`;
+
+
+      // ==========================================
+      // 4. Generate embeddings
+      // ==========================================
 
       const documentChunks = [];
 
-      // 4. Generate embedding for each chunk
-      for (let i = 0; i < chunks.length; i++) {
+      for (
+        let i = 0;
+        i < chunks.length;
+        i++
+      ) {
+
         console.log(
           `Generating embedding ${i + 1}/${chunks.length}`
         );
 
-        const embedding = await generateEmbedding(
-          chunks[i]
-        );
+        const embedding =
+          await generateEmbedding(
+            chunks[i]
+          );
 
         documentChunks.push({
           documentId,
-          filename: req.file.originalname,
+
+          filename:
+            req.file.originalname,
+
           chunkIndex: i,
+
           text: chunks[i],
+
           embedding,
         });
       }
 
-      // 5. Save everything to MongoDB
-      const savedChunks = await saveDocumentChunks(
-        documentChunks
-      );
+
+      // ==========================================
+      // 5. Save chunks to MongoDB
+      // ==========================================
+
+      const savedChunks =
+        await saveDocumentChunks(
+          documentChunks
+        );
 
       console.log(
         "Saved chunks to MongoDB:",
         savedChunks.length
       );
 
+
+      // ==========================================
+      // 6. Save document information
+      // ==========================================
+
+      const savedDocument =
+        await createDocument({
+          filename:
+            req.file.originalname,
+
+          pages:
+            result.total,
+
+          chunkCount:
+            savedChunks.length,
+        });
+
+
+      console.log(
+        "Document saved:",
+        savedDocument._id
+      );
+
+
+      // ==========================================
+      // 7. Send response
+      // ==========================================
+
       res.json({
-        message: "Document uploaded successfully",
-        filename: req.file.originalname,
-        pages: result.total,
-        chunks: savedChunks.length,
+        message:
+          "Document uploaded successfully",
+
+        documentId,
+
+        databaseId:
+          savedDocument._id,
+
+        filename:
+          req.file.originalname,
+
+        pages:
+          result.total,
+
+        chunks:
+          savedChunks.length,
+
+        status:
+          savedDocument.status,
       });
+
     } catch (error: any) {
-      console.error("UPLOAD ERROR:", error);
+
+      console.error(
+        "UPLOAD ERROR:",
+        error
+      );
 
       res.status(500).json({
         error:
@@ -91,5 +184,6 @@ router.post(
     }
   }
 );
+
 
 export default router;
