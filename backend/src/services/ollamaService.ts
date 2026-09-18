@@ -19,7 +19,7 @@ export async function generateAnswer(
   question: string
 ): Promise<string> {
   const prompt = `
-You are an AI assistant that answers questions about a company document.
+You are an AI assistant that answers questions about company documents.
 
 Use ONLY the information provided in the document context.
 
@@ -27,7 +27,7 @@ Rules:
 - Answer using only the provided context.
 - Do not make up information.
 - If the answer is not present in the context, say:
-  "I couldn't find that information in the uploaded document."
+"I couldn't find that information in the uploaded document."
 - Keep the answer clear and concise.
 
 DOCUMENT CONTEXT:

@@ -1,13 +1,18 @@
 import mongoose from "mongoose";
-import { MONGODB_URI } from "./env";
 
-export async function connectDatabase() {
+export async function connectDatabase(): Promise<void> {
   try {
-    await mongoose.connect(MONGODB_URI);
+    const mongoUri = process.env.MONGODB_URI;
+
+    if (!mongoUri) {
+      throw new Error("MONGODB_URI is not defined in .env");
+    }
+
+    await mongoose.connect(mongoUri);
 
     console.log("MongoDB connected successfully");
   } catch (error) {
-    console.error("MongoDB connection failed:", error);
+    console.error("MongoDB connection error:", error);
     process.exit(1);
   }
 }
