@@ -4,11 +4,7 @@ import { PDFParse } from "pdf-parse";
 
 import { chunkText } from "../utils/chunkText";
 import { generateEmbedding } from "../services/embeddingService";
-import {
-  saveChunks,
-  deleteDocument,
-} from "../services/documentRepository";
-
+import { saveDocumentChunks } from "../services/documentRepository";
 const router = Router();
 
 const upload = multer({
@@ -26,7 +22,9 @@ router.post(
         });
       }
 
-      // Extract PDF text
+      console.log("Processing:", req.file.originalname);
+
+      // 1. Extract PDF text
       const parser = new PDFParse({
         data: req.file.buffer,
       });
@@ -35,51 +33,60 @@ router.post(
 
       await parser.destroy();
 
-      // Split text into chunks
+      console.log("PDF text extracted");
+
+      // 2. Split text into chunks
       const chunks = chunkText(result.text);
 
       console.log("Total chunks:", chunks.length);
 
+      // 3. Create a unique document ID
+      const documentId = `${Date.now()}-${req.file.originalname}`;
+
       const documentChunks = [];
 
-      // Generate embedding for every chunk
+      // 4. Generate embedding for each chunk
       for (let i = 0; i < chunks.length; i++) {
         console.log(
           `Generating embedding ${i + 1}/${chunks.length}`
         );
 
-        const embedding = await generateEmbedding(chunks[i]);
+        const embedding = await generateEmbedding(
+          chunks[i]
+        );
 
         documentChunks.push({
-          documentName: req.file.originalname,
+          documentId,
+          filename: req.file.originalname,
           chunkIndex: i,
           text: chunks[i],
           embedding,
         });
       }
 
-      // Remove old copy of the document
-      await deleteDocument(req.file.originalname);
-
-      // Save chunks and embeddings
-      await saveChunks(documentChunks);
+      // 5. Save everything to MongoDB
+      const savedChunks = await saveDocumentChunks(
+        documentChunks
+      );
 
       console.log(
-        "Document saved to MongoDB:",
-        documentChunks.length
+        "Saved chunks to MongoDB:",
+        savedChunks.length
       );
 
       res.json({
         message: "Document uploaded successfully",
         filename: req.file.originalname,
         pages: result.total,
-        chunks: chunks.length,
+        chunks: savedChunks.length,
       });
     } catch (error: any) {
-      console.error("PDF ERROR:", error);
+      console.error("UPLOAD ERROR:", error);
 
       res.status(500).json({
-        error: error?.message || "Failed to process PDF",
+        error:
+          error?.message ||
+          "Failed to process document",
       });
     }
   }

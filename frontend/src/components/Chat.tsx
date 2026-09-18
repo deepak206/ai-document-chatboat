@@ -1,117 +1,120 @@
 import { useEffect, useRef, useState } from "react";
 import "./Chat.css";
 
+interface Source {
+  filename: string;
+  chunkIndex: number;
+  score: number;
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
+  sources?: Source[];
 }
 
-interface DocumentInfo {
-  filename: string;
-  pages: number;
-  text: string;
+interface ChatItem {
+  _id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messages?: Message[];
 }
 
 function Chat() {
-  const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
+
+  const [chats, setChats] = useState<ChatItem[]>([]);
+
+  const [currentChatId, setCurrentChatId] =
+    useState<string | null>(null);
+
+  const [currentMessage, setCurrentMessage] =
+    useState("");
+
   const [loading, setLoading] = useState(false);
 
-  const [document, setDocument] = useState<DocumentInfo | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(
+    null
+  );
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  /*
+   * Load previous chats
+   */
+  useEffect(() => {
+    loadChats();
+  }, []);
 
+  /*
+   * Auto scroll
+   */
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
     });
-  }, [messages, loading]);
+  }, [messages]);
 
-  // -----------------------------
-  // Upload PDF
-  // -----------------------------
-  const uploadDocument = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-
-    if (!file) return;
-
-    if (file.type !== "application/pdf") {
-      alert("Please upload a PDF file.");
-      return;
-    }
-
-    const formData = new FormData();
-
-    formData.append("document", file);
-
-    setUploading(true);
-
+  async function loadChats() {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/upload",
-        {
-          method: "POST",
-          body: formData,
-        }
+        "http://localhost:5000/api/chats"
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to upload document");
-      }
 
       const data = await response.json();
 
-      setDocument({
-        filename: data.filename,
-        pages: data.pages,
-        text: data.text,
-      });
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: `📄 "${data.filename}" uploaded successfully. I found ${data.pages} page(s). You can now ask questions about the document.`,
-        },
-      ]);
+      setChats(data);
     } catch (error) {
-      console.error("Upload error:", error);
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            "Sorry, I couldn't process that document. Please try again.",
-        },
-      ]);
-    } finally {
-      setUploading(false);
-
-      // Allow selecting the same file again
-      event.target.value = "";
+      console.error("Failed to load chats:", error);
     }
-  };
+  }
 
-  // -----------------------------
-  // Send Chat Message
-  // -----------------------------
-  const sendMessage = async () => {
-    if (!message.trim() || loading) return;
+  /*
+   * Load selected chat
+   */
+  async function loadChat(chatId: string) {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/chats/${chatId}`
+      );
 
-    const currentMessage = message.trim();
+      const data = await response.json();
+
+      setCurrentChatId(data._id);
+      setMessages(data.messages || []);
+    } catch (error) {
+      console.error("Failed to load chat:", error);
+    }
+  }
+
+  /*
+   * Start new chat
+   */
+  function newChat() {
+    setCurrentChatId(null);
+    setMessages([]);
+  }
+
+  /*
+   * Send message
+   */
+  async function sendMessage() {
+    if (!currentMessage.trim() || loading) {
+      return;
+    }
 
     const userMessage: Message = {
       role: "user",
       content: currentMessage,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
-    setMessage("");
+    setMessages((previous) => [
+      ...previous,
+      userMessage,
+    ]);
+
+    const messageToSend = currentMessage;
+
+    setCurrentMessage("");
     setLoading(true);
 
     try {
@@ -123,359 +126,339 @@ function Chat() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            message: currentMessage,
-
-            // Send document text if a document exists
-            documentText: document?.text || "",
+            message: messageToSend,
+            chatId: currentChatId,
           }),
         }
       );
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Failed to get response");
+        throw new Error(
+          data.error || "Something went wrong"
+        );
       }
 
-      const data = await response.json();
+      /*
+       * Save the newly created chat ID
+       */
+      if (!currentChatId && data.chatId) {
+        setCurrentChatId(data.chatId);
+      }
 
       const assistantMessage: Message = {
         role: "assistant",
-        content:
-          data.answer ||
-          "I couldn't generate a response.",
+        content: data.answer,
+        sources: data.sources,
       };
 
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
+      setMessages((previous) => [
+        ...previous,
+        assistantMessage,
+      ]);
+
+      /*
+       * Refresh sidebar
+       */
+      await loadChats();
+
+    } catch (error: any) {
       console.error("Chat error:", error);
 
-      setMessages((prev) => [
-        ...prev,
+      setMessages((previous) => [
+        ...previous,
         {
           role: "assistant",
           content:
-            "Sorry, something went wrong. Please try again.",
+            error?.message ||
+            "Something went wrong while processing your question.",
         },
       ]);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  // -----------------------------
-  // Open File Picker
-  // -----------------------------
-  const handleAttachClick = () => {
-    fileInputRef.current?.click();
-  };
+  function handleKeyDown(
+    event: React.KeyboardEvent<HTMLTextAreaElement>
+  ) {
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey
+    ) {
+      event.preventDefault();
+      sendMessage();
+    }
+  }
 
   return (
     <div className="chat-app">
 
-      {/* -------------------------------- */}
-      {/* Header */}
-      {/* -------------------------------- */}
+      {/* =========================
+          SIDEBAR
+      ========================== */}
 
-      <header className="chat-header">
+      <aside className="chat-sidebar">
 
-        <div className="brand">
-
-          <div className="brand-icon">
-            ✦
+        <div className="sidebar-header">
+          <div className="sidebar-logo">
+            🤖
           </div>
 
           <div>
-            <h1>AI Assistant</h1>
-
-            <span>
-              <span className="online-dot"></span>
-              Online
-            </span>
+            <h2>AI Document Chat</h2>
+            <span>RAG Assistant</span>
           </div>
-
         </div>
 
         <button
-          className="header-button"
-          title="More options"
+          className="new-chat-button"
+          onClick={newChat}
         >
-          ⋮
+          <span>＋</span>
+          New Chat
         </button>
 
-      </header>
+        <div className="chat-history">
 
-
-      {/* -------------------------------- */}
-      {/* Chat Area */}
-      {/* -------------------------------- */}
-
-      <main className="chat-body">
-
-        {messages.length === 0 ? (
-
-          <div className="welcome">
-
-            <div className="welcome-icon">
-              ✦
-            </div>
-
-            <h2>
-              How can I help you today?
-            </h2>
-
-            <p>
-              Ask me anything or upload a PDF
-              to start chatting with your
-              AI assistant.
-            </p>
-
-
-            {/* Document Upload */}
-
-            <button
-              className="upload-card"
-              onClick={handleAttachClick}
-              disabled={uploading}
-            >
-
-              <span className="upload-icon">
-                📄
-              </span>
-
-              <span>
-                {uploading
-                  ? "Processing document..."
-                  : "Upload a PDF document"}
-              </span>
-
-            </button>
-
-
-            {/* Suggestions */}
-
-            <div className="suggestions">
-
-              <button
-                onClick={() =>
-                  setMessage(
-                    "Explain Generative AI in simple terms"
-                  )
-                }
-              >
-                💡 Explain Generative AI
-              </button>
-
-              <button
-                onClick={() =>
-                  setMessage(
-                    "What can you help me with?"
-                  )
-                }
-              >
-                🚀 What can you help me with?
-              </button>
-
-              <button
-                onClick={() =>
-                  setMessage(
-                    "Give me some project ideas"
-                  )
-                }
-              >
-                🧠 Give me project ideas
-              </button>
-
-            </div>
-
+          <div className="history-title">
+            Recent Chats
           </div>
 
-        ) : (
+          {chats.length === 0 ? (
+            <div className="no-chats">
+              No previous chats
+            </div>
+          ) : (
+            chats.map((chat) => (
+              <button
+                key={chat._id}
+                className={`chat-history-item ${
+                  currentChatId === chat._id
+                    ? "active"
+                    : ""
+                }`}
+                onClick={() =>
+                  loadChat(chat._id)
+                }
+              >
+                <span className="chat-icon">
+                  💬
+                </span>
 
-          <div className="messages">
+                <span className="chat-title">
+                  {chat.title}
+                </span>
+              </button>
+            ))
+          )}
 
-            {/* Document badge */}
+        </div>
 
-            {document && (
+      </aside>
 
-              <div className="document-badge">
 
-                <div className="document-icon">
-                  📄
-                </div>
+      {/* =========================
+          MAIN CHAT
+      ========================== */}
 
-                <div className="document-info">
+      <main className="chat-main">
 
-                  <strong>
-                    {document.filename}
-                  </strong>
+        <header className="chat-header">
 
-                  <span>
-                    {document.pages} page
-                    {document.pages !== 1
-                      ? "s"
-                      : ""}
-                  </span>
+          <div>
+            <h1>Document Assistant</h1>
 
-                </div>
+            <span>
+              Ask questions about your documents
+            </span>
+          </div>
+
+          {currentChatId && (
+            <div className="active-chat-badge">
+              Chat Active
+            </div>
+          )}
+
+        </header>
+
+
+        {/* =========================
+            MESSAGES
+        ========================== */}
+
+        <div className="messages-container">
+
+          {messages.length === 0 ? (
+
+            <div className="welcome-screen">
+
+              <div className="welcome-icon">
+                🤖
+              </div>
+
+              <h2>
+                How can I help you?
+              </h2>
+
+              <p>
+                Ask questions about your uploaded
+                company documents.
+              </p>
+
+              <div className="suggestions">
 
                 <button
-                  className="remove-document"
-                  onClick={() => setDocument(null)}
-                  title="Remove document"
+                  onClick={() =>
+                    setCurrentMessage(
+                      "How many annual paid leave days do employees get?"
+                    )
+                  }
                 >
-                  ×
+                  📅 Leave policy
+                </button>
+
+                <button
+                  onClick={() =>
+                    setCurrentMessage(
+                      "What are the company working hours?"
+                    )
+                  }
+                >
+                  🕐 Working hours
+                </button>
+
+                <button
+                  onClick={() =>
+                    setCurrentMessage(
+                      "What technologies does the company use?"
+                    )
+                  }
+                >
+                  💻 Technology stack
                 </button>
 
               </div>
 
-            )}
+            </div>
 
+          ) : (
 
-            {/* Messages */}
-
-            {messages.map((msg, index) => (
+            messages.map((message, index) => (
 
               <div
                 key={index}
-                className={`message-row ${msg.role}`}
+                className={`message-row ${message.role}`}
               >
 
-                {msg.role === "assistant" && (
-
-                  <div className="avatar ai-avatar">
-                    ✦
-                  </div>
-
-                )}
-
+                <div className="message-avatar">
+                  {message.role === "user"
+                    ? "👤"
+                    : "🤖"}
+                </div>
 
                 <div className="message-content">
-
-                  <div className="message-name">
-                    {msg.role === "user"
-                      ? "You"
-                      : "AI Assistant"}
-                  </div>
 
                   <div className="message-bubble">
-                    {msg.content}
+                    {message.content}
                   </div>
 
-                </div>
 
+                  {/* Sources */}
 
-                {msg.role === "user" && (
+                  {message.sources &&
+                    message.sources.length > 0 && (
 
-                  <div className="avatar user-avatar">
-                    You
-                  </div>
+                      <div className="sources">
 
-                )}
+                        <div className="sources-title">
+                          Sources
+                        </div>
 
-              </div>
+                        {message.sources.map(
+                          (source, sourceIndex) => (
 
-            ))}
+                            <div
+                              key={sourceIndex}
+                              className="source-item"
+                            >
+                              📄 {source.filename}
 
+                              <span>
+                                Chunk{" "}
+                                {source.chunkIndex}
+                              </span>
+                            </div>
 
-            {/* Loading */}
+                          )
+                        )}
 
-            {loading && (
+                      </div>
 
-              <div className="message-row assistant">
-
-                <div className="avatar ai-avatar">
-                  ✦
-                </div>
-
-                <div className="message-content">
-
-                  <div className="message-name">
-                    AI Assistant
-                  </div>
-
-                  <div className="message-bubble typing">
-
-                    <span></span>
-                    <span></span>
-                    <span></span>
-
-                  </div>
+                    )}
 
                 </div>
 
               </div>
 
-            )}
+            ))
 
-            <div ref={messagesEndRef} />
-
-          </div>
-
-        )}
-
-      </main>
+          )}
 
 
-      {/* -------------------------------- */}
-      {/* Input Footer */}
-      {/* -------------------------------- */}
+          {/* Loading */}
 
-      <footer className="chat-footer">
+          {loading && (
 
-        {/* Hidden file input */}
+            <div className="message-row assistant">
 
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".pdf,application/pdf"
-          style={{ display: "none" }}
-          onChange={uploadDocument}
-        />
+              <div className="message-avatar">
+                🤖
+              </div>
 
+              <div className="message-content">
+
+                <div className="typing-indicator">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+
+              </div>
+
+            </div>
+
+          )}
+
+          <div ref={messagesEndRef} />
+
+        </div>
+
+
+        {/* =========================
+            INPUT
+        ========================== */}
 
         <div className="input-container">
 
-          <button
-            className="attach-button"
-            title="Attach PDF"
-            onClick={handleAttachClick}
-            disabled={uploading}
-          >
-            📎
-          </button>
-
-
           <textarea
-            value={message}
-            placeholder={
-              document
-                ? "Ask something about your document..."
-                : "Message AI Assistant..."
+            value={currentMessage}
+            onChange={(event) =>
+              setCurrentMessage(event.target.value)
             }
+            onKeyDown={handleKeyDown}
+            placeholder="Ask something about your documents..."
             rows={1}
-            onChange={(e) =>
-              setMessage(e.target.value)
-            }
-            onKeyDown={(e) => {
-
-              if (
-                e.key === "Enter" &&
-                !e.shiftKey
-              ) {
-                e.preventDefault();
-                sendMessage();
-              }
-
-            }}
+            disabled={loading}
           />
-
 
           <button
             className="send-button"
             onClick={sendMessage}
             disabled={
-              !message.trim() ||
               loading ||
-              uploading
+              !currentMessage.trim()
             }
           >
             ➤
@@ -483,17 +466,10 @@ function Chat() {
 
         </div>
 
-
-        <p className="footer-text">
-          AI can make mistakes. Check important
-          information.
-        </p>
-
-      </footer>
+      </main>
 
     </div>
   );
 }
 
 export default Chat;
-

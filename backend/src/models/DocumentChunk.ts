@@ -1,15 +1,23 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IDocumentChunk extends Document {
-  documentName: string;
+  documentId: string;
+  filename: string;
   chunkIndex: number;
   text: string;
   embedding: number[];
+  pageNumber?: number;
 }
 
 const documentChunkSchema = new Schema<IDocumentChunk>(
   {
-    documentName: {
+    documentId: {
+      type: String,
+      required: true,
+      index: true,
+    },
+
+    filename: {
       type: String,
       required: true,
     },
@@ -27,6 +35,10 @@ const documentChunkSchema = new Schema<IDocumentChunk>(
     embedding: {
       type: [Number],
       required: true,
+    },
+
+    pageNumber: {
+      type: Number,
     },
   },
   {
