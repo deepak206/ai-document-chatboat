@@ -18,3 +18,11 @@ export async function saveDocumentChunks(
 export async function getAllDocumentChunks() {
   return DocumentChunk.find().lean();
 }
+
+export async function deleteDocumentChunks(
+  documentId: string
+) {
+  return DocumentChunk.deleteMany({
+    documentId,
+  });
+}

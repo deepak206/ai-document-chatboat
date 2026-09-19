@@ -1,7 +1,3 @@
-/* =========================================================
-   GLOBAL
-========================================================= */
-
 * {
   box-sizing: border-box;
 }
@@ -26,14 +22,15 @@ body {
     Arial,
     sans-serif;
 
-  background: #0b0f19;
-  color: #f5f7fa;
+  background: #ffffff;
+  color: #202123;
+
+  -webkit-font-smoothing: antialiased;
 }
 
-
-/* =========================================================
-   MAIN APP
-========================================================= */
+/* ========================================
+   APP
+======================================== */
 
 .chat-app {
   width: 100%;
@@ -41,16 +38,15 @@ body {
 
   display: flex;
 
-  background: #0b0f19;
-  color: #f5f7fa;
+  background: #ffffff;
+  color: #202123;
 
   overflow: hidden;
 }
 
-
-/* =========================================================
-   LEFT SIDEBAR
-========================================================= */
+/* ========================================
+   SIDEBAR
+======================================== */
 
 .chat-sidebar {
   width: 280px;
@@ -60,32 +56,29 @@ body {
   display: flex;
   flex-direction: column;
 
-  background: #111827;
+  padding: 14px;
 
-  border-right: 1px solid #1f2937;
+  background: #f7f7f8;
 
-  padding: 20px;
+  border-right: 1px solid #d9d9d9;
 
   overflow: hidden;
 }
 
-
-/* =========================================================
-   SIDEBAR HEADER
-========================================================= */
+/* Sidebar Header */
 
 .sidebar-header {
   display: flex;
   align-items: center;
 
-  gap: 12px;
+  gap: 11px;
 
-  margin-bottom: 24px;
+  padding: 8px 8px 20px;
 }
 
 .sidebar-logo {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
 
   flex-shrink: 0;
 
@@ -93,22 +86,27 @@ body {
   align-items: center;
   justify-content: center;
 
-  background: #1f2937;
+  border-radius: 10px;
 
-  border: 1px solid #374151;
+  background: #ffffff;
 
-  border-radius: 12px;
+  border: 1px solid #d4d4d4;
 
-  font-size: 21px;
+  color: #202123;
+
+  font-size: 20px;
+
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 .sidebar-header h2 {
   margin: 0;
 
-  color: #ffffff;
+  color: #202123;
 
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 650;
 
   line-height: 1.3;
 }
@@ -118,15 +116,14 @@ body {
 
   margin-top: 3px;
 
-  color: #9ca3af;
+  color: #6b7280;
 
   font-size: 11px;
 }
 
-
-/* =========================================================
+/* ========================================
    NEW CHAT BUTTON
-========================================================= */
+======================================== */
 
 .new-chat-button {
   width: 100%;
@@ -134,61 +131,64 @@ body {
   display: flex;
   align-items: center;
 
-  gap: 8px;
+  gap: 9px;
 
-  padding: 12px 14px;
+  padding: 11px 13px;
 
-  border: 1px solid #374151;
-  border-radius: 10px;
+  border: 1px solid #c7c7c7;
 
-  background: #1f2937;
+  border-radius: 8px;
 
-  color: #ffffff;
+  background: #ffffff;
 
-  font-size: 14px;
-  font-weight: 500;
+  color: #202123;
+
+  font-family: inherit;
+
+  font-size: 13px;
+  font-weight: 600;
 
   cursor: pointer;
 
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.05);
+
   transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.15s ease;
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .new-chat-button:hover {
-  background: #374151;
+  background: #eeeeee;
 
-  border-color: #4b5563;
+  border-color: #b5b5b5;
 }
 
 .new-chat-button:active {
-  transform: scale(0.98);
+  background: #e5e5e5;
 }
 
 .new-chat-button span {
-  font-size: 20px;
+  color: #202123;
+
+  font-size: 18px;
 
   line-height: 1;
 }
 
-
-/* =========================================================
+/* ========================================
    CHAT HISTORY
-========================================================= */
+======================================== */
 
 .chat-history {
   flex: 1;
 
-  margin-top: 28px;
+  margin-top: 24px;
 
   overflow-y: auto;
 
-  padding-right: 4px;
+  padding-right: 3px;
 }
-
-
-/* Scrollbar */
 
 .chat-history::-webkit-scrollbar {
   width: 5px;
@@ -199,31 +199,23 @@ body {
 }
 
 .chat-history::-webkit-scrollbar-thumb {
-  background: #374151;
+  background: #c7c7c7;
 
   border-radius: 10px;
 }
 
-
-/* History heading */
-
 .history-title {
-  margin-bottom: 10px;
+  margin: 0 8px 9px;
 
   color: #6b7280;
 
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 700;
 
   letter-spacing: 0.7px;
 
   text-transform: uppercase;
 }
-
-
-/* =========================================================
-   HISTORY ITEM
-========================================================= */
 
 .chat-history-item {
   width: 100%;
@@ -231,46 +223,48 @@ body {
   display: flex;
   align-items: center;
 
-  gap: 10px;
+  gap: 9px;
 
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 
-  padding: 10px;
+  padding: 9px 10px;
 
   border: 1px solid transparent;
 
-  border-radius: 9px;
+  border-radius: 7px;
 
   background: transparent;
 
-  color: #d1d5db;
+  color: #343541;
 
   font-family: inherit;
 
   font-size: 13px;
+  font-weight: 450;
 
   text-align: left;
 
   cursor: pointer;
 
   transition:
-    background 0.2s ease,
-    color 0.2s ease,
-    border-color 0.2s ease;
+    background 0.15s ease,
+    color 0.15s ease;
 }
 
 .chat-history-item:hover {
-  background: #1f2937;
+  background: #e9e9e9;
 
-  color: #ffffff;
+  color: #202123;
 }
 
 .chat-history-item.active {
-  background: #374151;
+  background: #dedede;
 
-  border-color: #4b5563;
+  border-color: #d0d0d0;
 
-  color: #ffffff;
+  color: #202123;
+
+  font-weight: 600;
 }
 
 .chat-icon {
@@ -282,7 +276,9 @@ body {
   align-items: center;
   justify-content: center;
 
-  font-size: 14px;
+  color: #343541;
+
+  font-size: 13px;
 }
 
 .chat-title {
@@ -295,48 +291,38 @@ body {
   text-overflow: ellipsis;
 }
 
-
-/* =========================================================
-   NO CHATS
-========================================================= */
-
 .no-chats {
   padding: 12px 8px;
 
   color: #6b7280;
 
-  font-size: 13px;
-
-  line-height: 1.5;
+  font-size: 12px;
 }
 
-
-/* =========================================================
-   MAIN CHAT AREA
-========================================================= */
+/* ========================================
+   MAIN
+======================================== */
 
 .chat-main {
   flex: 1;
 
   min-width: 0;
-
   height: 100vh;
 
   display: flex;
   flex-direction: column;
 
-  background: #0b0f19;
+  background: #ffffff;
 
   overflow: hidden;
 }
 
-
-/* =========================================================
-   CHAT HEADER
-========================================================= */
+/* ========================================
+   HEADER
+======================================== */
 
 .chat-header {
-  min-height: 72px;
+  min-height: 66px;
 
   display: flex;
   align-items: center;
@@ -344,9 +330,9 @@ body {
 
   padding: 0 28px;
 
-  border-bottom: 1px solid #1f2937;
+  background: #ffffff;
 
-  background: #0f1420;
+  border-bottom: 1px solid #e5e5e5;
 
   flex-shrink: 0;
 }
@@ -354,10 +340,10 @@ body {
 .chat-header h1 {
   margin: 0;
 
-  color: #ffffff;
+  color: #202123;
 
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 17px;
+  font-weight: 650;
 }
 
 .chat-header span {
@@ -365,34 +351,29 @@ body {
 
   margin-top: 4px;
 
-  color: #9ca3af;
+  color: #5f6368;
 
   font-size: 12px;
 }
 
-
-/* =========================================================
-   ACTIVE CHAT BADGE
-========================================================= */
-
 .active-chat-badge {
   padding: 6px 10px;
 
-  border: 1px solid #374151;
+  border: 1px solid #c9c9c9;
 
   border-radius: 20px;
 
-  background: #1f2937;
+  background: #f5f5f5;
 
-  color: #9ca3af;
+  color: #4b5563;
 
-  font-size: 11px;
+  font-size: 10px;
+  font-weight: 600;
 }
 
-
-/* =========================================================
-   MESSAGES AREA
-========================================================= */
+/* ========================================
+   MESSAGES CONTAINER
+======================================== */
 
 .messages-container {
   flex: 1;
@@ -401,13 +382,10 @@ body {
 
   overflow-y: auto;
 
-  padding: 30px 20px;
+  padding: 32px 24px;
 
   scroll-behavior: smooth;
 }
-
-
-/* Scrollbar */
 
 .messages-container::-webkit-scrollbar {
   width: 6px;
@@ -418,15 +396,14 @@ body {
 }
 
 .messages-container::-webkit-scrollbar-thumb {
-  background: #374151;
+  background: #cfcfcf;
 
   border-radius: 10px;
 }
 
-
-/* =========================================================
-   WELCOME SCREEN
-========================================================= */
+/* ========================================
+   WELCOME
+======================================== */
 
 .welcome-screen {
   width: 100%;
@@ -448,8 +425,8 @@ body {
 }
 
 .welcome-icon {
-  width: 70px;
-  height: 70px;
+  width: 66px;
+  height: 66px;
 
   display: flex;
   align-items: center;
@@ -457,22 +434,26 @@ body {
 
   margin-bottom: 20px;
 
-  background: #1f2937;
+  border-radius: 16px;
 
-  border: 1px solid #374151;
+  background: #f1f1f1;
 
-  border-radius: 20px;
+  border: 1px solid #d8d8d8;
 
-  font-size: 34px;
+  color: #202123;
+
+  font-size: 31px;
 }
 
 .welcome-screen h2 {
   margin: 0;
 
-  color: #ffffff;
+  color: #202123;
 
   font-size: 28px;
-  font-weight: 600;
+  font-weight: 650;
+
+  letter-spacing: -0.4px;
 }
 
 .welcome-screen p {
@@ -480,67 +461,65 @@ body {
 
   margin: 10px 0 28px;
 
-  color: #9ca3af;
+  color: #5f6368;
 
-  font-size: 14px;
+  font-size: 13px;
 
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
-
-/* =========================================================
+/* ========================================
    SUGGESTIONS
-========================================================= */
+======================================== */
 
 .suggestions {
   width: 100%;
-  max-width: 650px;
+  max-width: 660px;
 
   display: grid;
 
-  grid-template-columns:
-    repeat(3, 1fr);
+  grid-template-columns: repeat(3, 1fr);
 
   gap: 10px;
 }
 
 .suggestions button {
-  min-height: 60px;
+  min-height: 64px;
 
   padding: 12px;
 
-  border: 1px solid #2d3748;
+  border: 1px solid #d9d9d9;
 
-  border-radius: 10px;
+  border-radius: 9px;
 
-  background: #111827;
+  background: #ffffff;
 
-  color: #d1d5db;
+  color: #343541;
 
   font-family: inherit;
 
   font-size: 12px;
+  font-weight: 500;
 
   cursor: pointer;
 
   transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
+    background 0.15s ease,
+    border-color 0.15s ease,
     transform 0.15s ease;
 }
 
 .suggestions button:hover {
-  background: #1f2937;
+  background: #f5f5f5;
 
-  border-color: #4b5563;
+  border-color: #bdbdbd;
 
   transform: translateY(-1px);
 }
 
-
-/* =========================================================
+/* ========================================
    MESSAGE ROW
-========================================================= */
+======================================== */
 
 .message-row {
   width: 100%;
@@ -548,7 +527,7 @@ body {
 
   display: flex;
 
-  gap: 12px;
+  gap: 11px;
 
   margin: 0 auto 22px;
 }
@@ -561,14 +540,9 @@ body {
   justify-content: flex-start;
 }
 
-
-/* =========================================================
-   MESSAGE AVATAR
-========================================================= */
-
 .message-avatar {
-  width: 34px;
-  height: 34px;
+  width: 33px;
+  height: 33px;
 
   flex-shrink: 0;
 
@@ -576,23 +550,28 @@ body {
   align-items: center;
   justify-content: center;
 
-  border-radius: 10px;
+  border-radius: 8px;
 
-  background: #1f2937;
+  background: #f1f1f1;
 
-  border: 1px solid #374151;
+  border: 1px solid #d8d8d8;
 
-  font-size: 15px;
+  color: #202123;
+
+  font-size: 14px;
 }
 
 .message-row.user .message-avatar {
   order: 2;
+
+  background: #e5e5e5;
+
+  border-color: #cfcfcf;
 }
 
-
-/* =========================================================
+/* ========================================
    MESSAGE CONTENT
-========================================================= */
+======================================== */
 
 .message-content {
   max-width: min(75%, 720px);
@@ -607,25 +586,25 @@ body {
   align-items: flex-end;
 }
 
-
-/* =========================================================
+/* ========================================
    MESSAGE BUBBLE
-========================================================= */
+======================================== */
 
 .message-bubble {
   padding: 12px 15px;
 
-  border-radius: 14px;
+  border-radius: 12px;
 
-  background: #18202e;
+  background: #f7f7f8;
 
-  border: 1px solid #273244;
+  border: 1px solid #e2e2e2;
 
-  color: #e5e7eb;
+  color: #202123;
 
   font-size: 14px;
+  font-weight: 400;
 
-  line-height: 1.6;
+  line-height: 1.65;
 
   white-space: pre-wrap;
 
@@ -633,11 +612,11 @@ body {
 }
 
 .message-row.user .message-bubble {
-  background: #2563eb;
+  background: #eeeeee;
 
-  border-color: #2563eb;
+  border-color: #dddddd;
 
-  color: #ffffff;
+  color: #202123;
 
   border-bottom-right-radius: 4px;
 }
@@ -646,34 +625,33 @@ body {
   border-bottom-left-radius: 4px;
 }
 
-
-/* =========================================================
+/* ========================================
    SOURCES
-========================================================= */
+======================================== */
 
 .sources {
   width: 100%;
 
   padding: 10px 12px;
 
-  border: 1px solid #273244;
+  border: 1px solid #dcdcdc;
 
-  border-radius: 10px;
+  border-radius: 9px;
 
-  background: #111827;
+  background: #fafafa;
 }
 
 .sources-title {
-  margin-bottom: 8px;
+  margin-bottom: 7px;
 
-  color: #9ca3af;
+  color: #555555;
 
-  font-size: 11px;
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 700;
 
   text-transform: uppercase;
 
-  letter-spacing: 0.5px;
+  letter-spacing: 0.7px;
 }
 
 .source-item {
@@ -683,13 +661,14 @@ body {
 
   gap: 10px;
 
-  padding: 6px 0;
+  padding: 7px 0;
 
-  color: #d1d5db;
+  border-top: 1px solid #e6e6e6;
+
+  color: #343541;
 
   font-size: 11px;
-
-  border-top: 1px solid #1f2937;
+  font-weight: 500;
 }
 
 .source-item:first-of-type {
@@ -700,12 +679,13 @@ body {
   flex-shrink: 0;
 
   color: #6b7280;
+
+  font-weight: 400;
 }
 
-
-/* =========================================================
+/* ========================================
    TYPING INDICATOR
-========================================================= */
+======================================== */
 
 .typing-indicator {
   display: flex;
@@ -715,22 +695,22 @@ body {
 
   width: fit-content;
 
-  padding: 13px 15px;
+  padding: 12px 14px;
 
-  background: #18202e;
+  background: #f7f7f8;
 
-  border: 1px solid #273244;
+  border: 1px solid #e2e2e2;
 
-  border-radius: 14px;
+  border-radius: 12px;
 }
 
 .typing-indicator span {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 
   border-radius: 50%;
 
-  background: #9ca3af;
+  background: #5f6368;
 
   animation: typing 1.2s infinite ease-in-out;
 }
@@ -749,7 +729,7 @@ body {
   100% {
     transform: translateY(0);
 
-    opacity: 0.5;
+    opacity: 0.4;
   }
 
   30% {
@@ -759,10 +739,9 @@ body {
   }
 }
 
-
-/* =========================================================
+/* ========================================
    INPUT AREA
-========================================================= */
+======================================== */
 
 .input-container {
   width: 100%;
@@ -770,13 +749,11 @@ body {
   display: flex;
   align-items: flex-end;
 
-  gap: 10px;
+  gap: 8px;
 
-  padding: 16px 20px 20px;
+  padding: 14px 24px 20px;
 
-  background: #0b0f19;
-
-  border-top: 1px solid #1f2937;
+  background: #ffffff;
 
   flex-shrink: 0;
 }
@@ -791,47 +768,55 @@ body {
 
   resize: none;
 
-  border: 1px solid #374151;
+  border: 1px solid #bdbdbd;
 
-  border-radius: 12px;
+  border-radius: 10px;
 
   outline: none;
 
-  background: #111827;
+  background: #ffffff;
 
-  color: #ffffff;
+  color: #202123;
 
   font-family: inherit;
 
   font-size: 14px;
+  font-weight: 400;
 
   line-height: 1.5;
 
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04);
+
   transition:
-    border-color 0.2s ease,
-    background 0.2s ease;
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .input-container textarea::placeholder {
   color: #6b7280;
+
+  opacity: 1;
 }
 
 .input-container textarea:focus {
-  border-color: #4b5563;
+  border-color: #8f8f8f;
 
-  background: #151c2a;
+  box-shadow:
+    0 0 0 2px rgba(0, 0, 0, 0.05);
 }
 
 .input-container textarea:disabled {
-  opacity: 0.6;
+  background: #f5f5f5;
 
-  cursor: not-allowed;
+  color: #777777;
+
+  opacity: 0.7;
 }
 
-
-/* =========================================================
+/* ========================================
    SEND BUTTON
-========================================================= */
+======================================== */
 
 .send-button {
   width: 48px;
@@ -845,23 +830,23 @@ body {
 
   border: none;
 
-  border-radius: 12px;
+  border-radius: 10px;
 
-  background: #2563eb;
+  background: #2f2f2f;
 
   color: #ffffff;
 
-  font-size: 20px;
+  font-size: 18px;
 
   cursor: pointer;
 
   transition:
-    background 0.2s ease,
+    background 0.15s ease,
     transform 0.15s ease;
 }
 
 .send-button:hover:not(:disabled) {
-  background: #1d4ed8;
+  background: #1f1f1f;
 
   transform: translateY(-1px);
 }
@@ -871,24 +856,21 @@ body {
 }
 
 .send-button:disabled {
-  background: #374151;
+  background: #d6d6d6;
 
-  color: #6b7280;
+  color: #8a8a8a;
 
   cursor: not-allowed;
 }
 
-
-/* =========================================================
-   RESPONSIVE — TABLET
-========================================================= */
+/* ========================================
+   RESPONSIVE
+======================================== */
 
 @media (max-width: 900px) {
   .chat-sidebar {
     width: 240px;
     min-width: 240px;
-
-    padding: 16px;
   }
 
   .message-content {
@@ -900,63 +882,37 @@ body {
   }
 }
 
-
-/* =========================================================
-   RESPONSIVE — MOBILE
-========================================================= */
-
 @media (max-width: 700px) {
   .chat-sidebar {
     width: 220px;
     min-width: 220px;
 
-    padding: 14px;
-  }
-
-  .sidebar-header h2 {
-    font-size: 13px;
-  }
-
-  .chat-history-item {
-    font-size: 12px;
+    padding: 12px;
   }
 
   .chat-header {
-    padding: 0 16px;
-  }
-
-  .chat-header h1 {
-    font-size: 16px;
+    padding: 0 18px;
   }
 
   .messages-container {
-    padding: 20px 12px;
+    padding: 22px 14px;
   }
 
   .input-container {
-    padding: 12px;
+    padding: 12px 14px 16px;
   }
 
   .message-content {
     max-width: 82%;
   }
-
-  .welcome-screen h2 {
-    font-size: 23px;
-  }
 }
-
-
-/* =========================================================
-   RESPONSIVE — SMALL MOBILE
-========================================================= */
 
 @media (max-width: 550px) {
   .chat-sidebar {
-    width: 65px;
-    min-width: 65px;
+    width: 64px;
+    min-width: 64px;
 
-    padding: 10px;
+    padding: 9px;
   }
 
   .sidebar-header {
@@ -968,14 +924,14 @@ body {
   }
 
   .sidebar-logo {
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
   }
 
   .new-chat-button {
     justify-content: center;
 
-    padding: 12px;
+    padding: 11px;
   }
 
   .new-chat-button {
@@ -983,7 +939,7 @@ body {
   }
 
   .new-chat-button span {
-    font-size: 20px;
+    font-size: 19px;
   }
 
   .history-title {
@@ -1000,23 +956,19 @@ body {
     display: none;
   }
 
-  .chat-icon {
-    font-size: 16px;
-  }
-
   .active-chat-badge {
     display: none;
   }
 
   .message-avatar {
-    width: 30px;
-    height: 30px;
+    width: 29px;
+    height: 29px;
 
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .message-content {
-    max-width: calc(100% - 42px);
+    max-width: calc(100% - 40px);
   }
 
   .message-bubble {
@@ -1024,13 +976,125 @@ body {
   }
 
   .welcome-icon {
-    width: 60px;
-    height: 60px;
+    width: 58px;
+    height: 58px;
 
-    font-size: 28px;
+    font-size: 27px;
   }
 
   .welcome-screen h2 {
     font-size: 21px;
   }
+}
+/* ========================================
+   DOCUMENTS
+======================================== */
+
+.documents-section {
+  margin-top: 24px;
+}
+
+.no-documents {
+  padding: 10px 12px;
+  color: #6b6b6b;
+  font-size: 13px;
+}
+
+.document-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.document-item:hover {
+  background: #e9e9e9;
+}
+
+.document-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.document-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.document-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #202123;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.document-meta {
+  font-size: 11px;
+  color: #6b6b6b;
+}
+
+.document-status {
+  font-size: 10px;
+  text-transform: capitalize;
+}
+
+.document-status.ready {
+  color: #16803c;
+}
+
+.document-status.processing {
+  color: #b7791f;
+}
+
+.document-status.failed {
+  color: #c53030;
+}
+
+/* ========================================
+   UPLOAD BUTTON
+======================================== */
+
+.upload-document-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  width: 100%;
+  box-sizing: border-box;
+
+  margin-top: 10px;
+  padding: 10px 12px;
+
+  border: 1px dashed #a0a0a0;
+  border-radius: 8px;
+
+  background: #ffffff;
+  color: #202123;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.upload-document-button:hover {
+  background: #f1f1f1;
+  border-color: #666666;
+}
+
+.upload-document-button.uploading {
+  cursor: wait;
+  opacity: 0.7;
 }

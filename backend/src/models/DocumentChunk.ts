@@ -46,7 +46,8 @@ const documentChunkSchema = new Schema<IDocumentChunk>(
   }
 );
 
-export const DocumentChunk = mongoose.model<IDocumentChunk>(
-  "DocumentChunk",
-  documentChunkSchema
-);
+export const DocumentChunk =
+  mongoose.model<IDocumentChunk>(
+    "DocumentChunk",
+    documentChunkSchema
+  );
