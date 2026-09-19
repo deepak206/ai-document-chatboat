@@ -1,29 +1,42 @@
 import { generateEmbedding } from "./embeddingService";
-import { getAllDocumentChunks } from "./documentRepository";
-import { cosineSimilarity } from "../utils/similarity";
+import { DocumentChunk } from "../models/DocumentChunk";
 
 export async function searchSimilarChunks(
   query: string,
   topK: number = 3
 ) {
-  // 1. Convert user's question into an embedding
-  const queryEmbedding = await generateEmbedding(query);
+  const queryEmbedding =
+    await generateEmbedding(query);
 
-  // 2. Get stored chunks from MongoDB
-  const chunks = await getAllDocumentChunks();
+  const results =
+    await DocumentChunk.aggregate([
+      {
+        $vectorSearch: {
+          index: "vector_index",
+          path: "embedding",
+          queryVector: queryEmbedding,
+          numCandidates: Math.max(
+            topK * 10,
+            50
+          ),
+          limit: topK,
+        },
+      },
 
-  // 3. Calculate similarity
-  const results = chunks.map((chunk) => ({
-    ...chunk,
-    score: cosineSimilarity(
-      queryEmbedding,
-      chunk.embedding
-    ),
-  }));
+      {
+        $project: {
+          _id: 1,
+          documentId: 1,
+          filename: 1,
+          chunkIndex: 1,
+          text: 1,
 
-  // 4. Sort by highest similarity
-  results.sort((a, b) => b.score - a.score);
+          score: {
+            $meta: "vectorSearchScore",
+          },
+        },
+      },
+    ]);
 
-  // 5. Return top K results
-  return results.slice(0, topK);
+  return results;
 }
