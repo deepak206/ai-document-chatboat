@@ -12,7 +12,10 @@ import {
 
 const router = Router();
 
+// ---------------------------------------
 // Get all documents
+// ---------------------------------------
+
 router.get("/documents", async (_req, res) => {
   try {
     const documents = await getAllDocuments();
@@ -29,15 +32,21 @@ router.get("/documents", async (_req, res) => {
   }
 });
 
+// ---------------------------------------
 // Get single document
+// ---------------------------------------
+
 router.get("/documents/:id", async (req, res) => {
   try {
+    const documentId = req.params.id;
+
     const document =
-      await getDocumentById(req.params.id);
+      await getDocumentById(documentId);
 
     if (!document) {
       return res.status(404).json({
         error: "Document not found",
+        documentId,
       });
     }
 
@@ -53,10 +62,18 @@ router.get("/documents/:id", async (req, res) => {
   }
 });
 
+// ---------------------------------------
 // Delete document
+// ---------------------------------------
+
 router.delete("/documents/:id", async (req, res) => {
   try {
     const documentId = req.params.id;
+
+    console.log(
+      "DELETE DOCUMENT REQUEST:",
+      documentId
+    );
 
     const document =
       await getDocumentById(documentId);
@@ -64,21 +81,38 @@ router.delete("/documents/:id", async (req, res) => {
     if (!document) {
       return res.status(404).json({
         error: "Document not found",
+        documentId,
       });
     }
 
-    // Delete document chunks / embeddings first
-    await deleteDocumentChunks(documentId);
+    // Delete chunks and embeddings
+    const chunkResult =
+      await deleteDocumentChunks(documentId);
+
+    console.log(
+      `Deleted ${chunkResult.deletedCount} chunks`
+    );
 
     // Delete document metadata
     await deleteDocument(documentId);
 
+    console.log(
+      "Document deleted:",
+      document.filename
+    );
+
     res.json({
       message: "Document deleted successfully",
       documentId,
+      filename: document.filename,
+      deletedChunks:
+        chunkResult.deletedCount,
     });
   } catch (error: any) {
-    console.error("DELETE DOCUMENT ERROR:", error);
+    console.error(
+      "DELETE DOCUMENT ERROR:",
+      error
+    );
 
     res.status(500).json({
       error:

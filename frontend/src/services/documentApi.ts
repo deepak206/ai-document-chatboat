@@ -9,13 +9,16 @@ export async function getDocuments() {
     `${API_URL}/documents`
   );
 
+  const data = await response.json();
+
   if (!response.ok) {
     throw new Error(
-      "Failed to load documents"
+      data.error ||
+        "Failed to load documents"
     );
   }
 
-  return response.json();
+  return data;
 }
 
 // ---------------------------------------
@@ -55,7 +58,7 @@ export async function uploadDocument(
 
 export async function deleteDocument(
   documentId: string
-): Promise<void> {
+) {
   const response = await fetch(
     `${API_URL}/documents/${documentId}`,
     {
@@ -71,4 +74,6 @@ export async function deleteDocument(
         "Failed to delete document"
     );
   }
+
+  return data;
 }

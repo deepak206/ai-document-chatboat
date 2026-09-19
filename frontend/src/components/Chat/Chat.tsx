@@ -147,38 +147,32 @@ import {
     // ---------------------------------------
   
     async function loadChat(
-      chatId: string
-    ) {
-      try {
-        const chat =
-          await getChat(chatId);
-  
-        setCurrentChatId(
-          chat._id
-        );
-  
-        setMessages(
-          chat.messages || []
-        );
-  
-        setSidebarOpen(false);
-      } catch (error) {
-        console.error(
-          "Failed to load chat:",
-          error
-        );
+        chatId: string
+      ) {
+        try {
+          const chat =
+            await getChat(chatId);
+      
+          setCurrentChatId(chat._id);
+      
+          setMessages(
+            chat.messages || []
+          );
+      
+          setSidebarOpen(false);
+        } catch (error: any) {
+          console.error(
+            "LOAD CHAT ERROR:",
+            error
+          );
+      
+          alert(
+            error?.message ||
+              "Failed to load chat"
+          );
+        }
       }
-    }
   
-    // ---------------------------------------
-    // New chat
-    // ---------------------------------------
-  
-    function newChat() {
-      setCurrentChatId(null);
-      setMessages([]);
-      setSidebarOpen(false);
-    }
   
     // ---------------------------------------
     // Send message to Agent
@@ -308,25 +302,6 @@ import {
       }
     }
 
-    async function handleChatSelect(chatId: string) {
-        try {
-          setCurrentChatId(chatId);
-      
-          const chat = await getChat(chatId);
-      
-          setMessages(chat.messages || []);
-      
-          setSidebarOpen(false);
-        } catch (error: any) {
-          console.error("LOAD CHAT ERROR:", error);
-      
-          alert(
-            error?.message ||
-              "Failed to load chat"
-          );
-        }
-      }
-
       async function handleNewChat() {
         setCurrentChatId(null);
         setMessages([]);
@@ -347,11 +322,11 @@ import {
             deletingDocumentId={deletingDocumentId}
             isOpen={sidebarOpen}
             onNewChat={handleNewChat}
-            onChatSelect={handleChatSelect}
+            onChatSelect={loadChat}
             onUpload={handleUpload}
             onDeleteDocument={handleDeleteDocument}
             onClose={() => setSidebarOpen(false)}
-        />
+            />
   
         <main className="flex min-w-0 flex-1 flex-col bg-gray-100">
           <ChatHeader
