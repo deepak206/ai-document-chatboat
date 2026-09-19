@@ -3,7 +3,14 @@ import { DocumentModel } from "../models/Document";
 interface CreateDocumentInput {
   filename: string;
   pages: number;
-  chunkCount: number;
+}
+
+export async function findDocumentByFilename(
+  filename: string
+) {
+  return DocumentModel.findOne({
+    filename,
+  }).lean();
 }
 
 export async function createDocument(
@@ -12,9 +19,39 @@ export async function createDocument(
   return DocumentModel.create({
     filename: data.filename,
     pages: data.pages,
-    chunkCount: data.chunkCount,
-    status: "ready",
+    chunkCount: 0,
+    status: "processing",
   });
+}
+
+export async function updateDocumentReady(
+  documentId: string,
+  chunkCount: number
+) {
+  return DocumentModel.findByIdAndUpdate(
+    documentId,
+    {
+      chunkCount,
+      status: "ready",
+    },
+    {
+      new: true,
+    }
+  );
+}
+
+export async function updateDocumentFailed(
+  documentId: string
+) {
+  return DocumentModel.findByIdAndUpdate(
+    documentId,
+    {
+      status: "failed",
+    },
+    {
+      new: true,
+    }
+  );
 }
 
 export async function getAllDocuments() {

@@ -13,6 +13,7 @@ const documentSchema = new Schema<IDocument>(
     filename: {
       type: String,
       required: true,
+      trim: true,
     },
 
     pages: {
@@ -34,7 +35,11 @@ const documentSchema = new Schema<IDocument>(
 
     status: {
       type: String,
-      enum: ["processing", "ready", "failed"],
+      enum: [
+        "processing",
+        "ready",
+        "failed",
+      ],
       default: "processing",
     },
   },

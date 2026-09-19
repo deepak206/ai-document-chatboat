@@ -1,4 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
 import "./Chat.css";
 
 interface Source {
@@ -21,10 +26,30 @@ interface ChatItem {
   messages?: Message[];
 }
 
-function Chat() {
-  const [messages, setMessages] = useState<Message[]>([]);
+interface DocumentItem {
+  _id: string;
+  filename: string;
+  pages: number;
+  chunkCount: number;
+  status:
+    | "processing"
+    | "ready"
+    | "failed";
+  uploadedAt: string;
+}
 
-  const [chats, setChats] = useState<ChatItem[]>([]);
+function Chat() {
+  /*
+  ========================================
+  CHAT STATE
+  ========================================
+  */
+
+  const [messages, setMessages] =
+    useState<Message[]>([]);
+
+  const [chats, setChats] =
+    useState<ChatItem[]>([]);
 
   const [currentChatId, setCurrentChatId] =
     useState<string | null>(null);
@@ -32,27 +57,58 @@ function Chat() {
   const [currentMessage, setCurrentMessage] =
     useState("");
 
-  const [loading, setLoading] = useState(false);
-
-  const messagesEndRef = useRef<HTMLDivElement | null>(
-    null
-  );
+  const [loading, setLoading] =
+    useState(false);
 
   /*
-   * Load previous chats
-   */
+  ========================================
+  DOCUMENT STATE
+  ========================================
+  */
+
+  const [documents, setDocuments] =
+    useState<DocumentItem[]>([]);
+
+  const [uploading, setUploading] =
+    useState(false);
+
+  /*
+  ========================================
+  REFS
+  ========================================
+  */
+
+  const messagesEndRef =
+    useRef<HTMLDivElement | null>(null);
+
+  /*
+  ========================================
+  LOAD DATA WHEN COMPONENT STARTS
+  ========================================
+  */
+
   useEffect(() => {
     loadChats();
+    loadDocuments();
   }, []);
 
   /*
-   * Auto scroll
-   */
+  ========================================
+  AUTO SCROLL
+  ========================================
+  */
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({
       behavior: "smooth",
     });
   }, [messages]);
+
+  /*
+  ========================================
+  LOAD CHATS
+  ========================================
+  */
 
   async function loadChats() {
     try {
@@ -60,45 +116,233 @@ function Chat() {
         "http://localhost:5000/api/chats"
       );
 
+      if (!response.ok) {
+        throw new Error(
+          "Failed to load chats"
+        );
+      }
+
       const data = await response.json();
 
       setChats(data);
     } catch (error) {
-      console.error("Failed to load chats:", error);
+      console.error(
+        "Failed to load chats:",
+        error
+      );
     }
   }
 
   /*
-   * Load selected chat
-   */
-  async function loadChat(chatId: string) {
+  ========================================
+  LOAD DOCUMENTS
+  ========================================
+  */
+
+  async function loadDocuments() {
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/documents"
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          "Failed to load documents"
+        );
+      }
+
+      const data = await response.json();
+
+      setDocuments(data);
+    } catch (error) {
+      console.error(
+        "Failed to load documents:",
+        error
+      );
+    }
+  }
+
+  /*
+  ========================================
+  LOAD SINGLE CHAT
+  ========================================
+  */
+
+  async function loadChat(
+    chatId: string
+  ) {
     try {
       const response = await fetch(
         `http://localhost:5000/api/chats/${chatId}`
       );
 
+      if (!response.ok) {
+        throw new Error(
+          "Failed to load chat"
+        );
+      }
+
       const data = await response.json();
 
       setCurrentChatId(data._id);
-      setMessages(data.messages || []);
+
+      setMessages(
+        data.messages || []
+      );
     } catch (error) {
-      console.error("Failed to load chat:", error);
+      console.error(
+        "Failed to load chat:",
+        error
+      );
     }
   }
 
   /*
-   * Start new chat
-   */
+  ========================================
+  NEW CHAT
+  ========================================
+  */
+
   function newChat() {
     setCurrentChatId(null);
     setMessages([]);
+    setCurrentMessage("");
   }
 
   /*
-   * Send message
-   */
+  ========================================
+  UPLOAD DOCUMENT
+  ========================================
+  */
+
+  async function handleFileUpload(
+    event: React.ChangeEvent<HTMLInputElement>
+  ) {
+    const file =
+      event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    /*
+    ------------------------------
+    Validate PDF
+    ------------------------------
+    */
+
+    const isPdf =
+      file.type === "application/pdf" ||
+      file.name
+        .toLowerCase()
+        .endsWith(".pdf");
+
+    if (!isPdf) {
+      alert(
+        "Please select a PDF file."
+      );
+
+      event.target.value = "";
+
+      return;
+    }
+
+    /*
+    ------------------------------
+    Create FormData
+    ------------------------------
+    */
+
+    const formData =
+      new FormData();
+
+    formData.append(
+      "document",
+      file
+    );
+
+    setUploading(true);
+
+    try {
+      /*
+      ------------------------------
+      Upload PDF
+      ------------------------------
+      */
+
+      const response = await fetch(
+        "http://localhost:5000/api/upload",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data =
+        await response.json();
+
+      /*
+      ------------------------------
+      Handle API Error
+      ------------------------------
+      */
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "Failed to upload document"
+        );
+      }
+
+      console.log(
+        "Document uploaded:",
+        data
+      );
+
+      /*
+      ------------------------------
+      Refresh documents
+      ------------------------------
+      */
+
+      await loadDocuments();
+
+      alert(
+        "Document uploaded successfully!"
+      );
+    } catch (error: any) {
+      console.error(
+        "Upload error:",
+        error
+      );
+
+      alert(
+        error?.message ||
+          "Failed to upload document"
+      );
+    } finally {
+      setUploading(false);
+
+      /*
+      Allow selecting
+      the same file again
+      */
+
+      event.target.value = "";
+    }
+  }
+
+  /*
+  ========================================
+  SEND MESSAGE
+  ========================================
+  */
+
   async function sendMessage() {
-    if (!currentMessage.trim() || loading) {
+    if (
+      !currentMessage.trim() ||
+      loading
+    ) {
       return;
     }
 
@@ -107,78 +351,132 @@ function Chat() {
       content: currentMessage,
     };
 
-    setMessages((previous) => [
-      ...previous,
-      userMessage,
-    ]);
+    /*
+    ------------------------------
+    Show user message immediately
+    ------------------------------
+    */
 
-    const messageToSend = currentMessage;
+    setMessages(
+      (previous) => [
+        ...previous,
+        userMessage,
+      ]
+    );
+
+    const messageToSend =
+      currentMessage;
 
     setCurrentMessage("");
+
     setLoading(true);
 
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/chat",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            message: messageToSend,
-            chatId: currentChatId,
-          }),
-        }
-      );
+      const response =
+        await fetch(
+          "http://localhost:5000/api/chat",
+          {
+            method: "POST",
 
-      const data = await response.json();
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body: JSON.stringify({
+              message:
+                messageToSend,
+
+              chatId:
+                currentChatId,
+            }),
+          }
+        );
+
+      const data =
+        await response.json();
 
       if (!response.ok) {
         throw new Error(
-          data.error || "Something went wrong"
+          data.error ||
+            "Something went wrong"
         );
       }
 
       /*
-       * Save the newly created chat ID
-       */
-      if (!currentChatId && data.chatId) {
-        setCurrentChatId(data.chatId);
+      ------------------------------
+      Save chat ID
+      ------------------------------
+      */
+
+      if (
+        !currentChatId &&
+        data.chatId
+      ) {
+        setCurrentChatId(
+          data.chatId
+        );
       }
 
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: data.answer,
-        sources: data.sources,
-      };
-
-      setMessages((previous) => [
-        ...previous,
-        assistantMessage,
-      ]);
-
       /*
-       * Refresh sidebar
-       */
-      await loadChats();
+      ------------------------------
+      Assistant message
+      ------------------------------
+      */
 
-    } catch (error: any) {
-      console.error("Chat error:", error);
-
-      setMessages((previous) => [
-        ...previous,
+      const assistantMessage: Message =
         {
           role: "assistant",
+
           content:
-            error?.message ||
-            "Something went wrong while processing your question.",
-        },
-      ]);
+            data.answer,
+
+          sources:
+            data.sources,
+        };
+
+      setMessages(
+        (previous) => [
+          ...previous,
+          assistantMessage,
+        ]
+      );
+
+      /*
+      ------------------------------
+      Refresh chat history
+      ------------------------------
+      */
+
+      await loadChats();
+    } catch (error: any) {
+      console.error(
+        "Chat error:",
+        error
+      );
+
+      setMessages(
+        (previous) => [
+          ...previous,
+          {
+            role: "assistant",
+
+            content:
+              error?.message ||
+              "Something went wrong while processing your question.",
+          },
+        ]
+      );
     } finally {
       setLoading(false);
     }
   }
+
+  /*
+  ========================================
+  KEYBOARD HANDLER
+  ========================================
+  */
 
   function handleKeyDown(
     event: React.KeyboardEvent<HTMLTextAreaElement>
@@ -188,37 +486,64 @@ function Chat() {
       !event.shiftKey
     ) {
       event.preventDefault();
+
       sendMessage();
     }
   }
 
+  /*
+  ========================================
+  RENDER
+  ========================================
+  */
+
   return (
     <div className="chat-app">
 
-      {/* =========================
+      {/* ==================================
           SIDEBAR
-      ========================== */}
+      ================================== */}
 
       <aside className="chat-sidebar">
 
+        {/* ================================
+            SIDEBAR HEADER
+        ================================= */}
+
         <div className="sidebar-header">
+
           <div className="sidebar-logo">
             🤖
           </div>
 
           <div>
-            <h2>AI Document Chat</h2>
-            <span>RAG Assistant</span>
+            <h2>
+              AI Document Chat
+            </h2>
+
+            <span>
+              RAG Assistant
+            </span>
           </div>
+
         </div>
+
+        {/* ================================
+            NEW CHAT
+        ================================= */}
 
         <button
           className="new-chat-button"
           onClick={newChat}
         >
           <span>＋</span>
+
           New Chat
         </button>
+
+        {/* ================================
+            CHAT HISTORY
+        ================================= */}
 
         <div className="chat-history">
 
@@ -231,48 +556,167 @@ function Chat() {
               No previous chats
             </div>
           ) : (
-            chats.map((chat) => (
-              <button
-                key={chat._id}
-                className={`chat-history-item ${
-                  currentChatId === chat._id
-                    ? "active"
-                    : ""
-                }`}
-                onClick={() =>
-                  loadChat(chat._id)
-                }
-              >
-                <span className="chat-icon">
-                  💬
-                </span>
+            chats.map(
+              (chat) => (
+                <button
+                  key={
+                    chat._id
+                  }
+                  className={`chat-history-item ${
+                    currentChatId ===
+                    chat._id
+                      ? "active"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    loadChat(
+                      chat._id
+                    )
+                  }
+                >
 
-                <span className="chat-title">
-                  {chat.title}
-                </span>
-              </button>
-            ))
+                  <span className="chat-icon">
+                    💬
+                  </span>
+
+                  <span className="chat-title">
+                    {chat.title}
+                  </span>
+
+                </button>
+              )
+            )
           )}
+
+        </div>
+
+        {/* ================================
+            DOCUMENTS
+        ================================= */}
+
+        <div className="documents-section">
+
+          <div className="history-title">
+            Documents
+          </div>
+
+          {documents.length ===
+          0 ? (
+            <div className="no-documents">
+              No documents uploaded
+            </div>
+          ) : (
+            documents.map(
+              (document) => (
+                <div
+                  key={
+                    document._id
+                  }
+                  className="document-item"
+                >
+
+                  <span className="document-icon">
+                    📄
+                  </span>
+
+                  <div className="document-info">
+
+                    <span className="document-name">
+                      {
+                        document.filename
+                      }
+                    </span>
+
+                    <span className="document-meta">
+                      {
+                        document.pages
+                      }{" "}
+                      pages ·{" "}
+                      {
+                        document.chunkCount
+                      }{" "}
+                      chunks
+                    </span>
+
+                    <span
+                      className={`document-status ${document.status}`}
+                    >
+                      ●{" "}
+                      {
+                        document.status
+                      }
+                    </span>
+
+                  </div>
+
+                </div>
+              )
+            )
+          )}
+
+          {/* ================================
+              UPLOAD BUTTON
+          ================================= */}
+
+          <label
+            htmlFor="document-upload"
+            className={`upload-document-button ${
+              uploading
+                ? "uploading"
+                : ""
+            }`}
+          >
+
+            <span>
+              {uploading
+                ? "⏳"
+                : "＋"}
+            </span>
+
+            {uploading
+              ? "Uploading..."
+              : "Upload PDF"}
+
+          </label>
+
+          <input
+            id="document-upload"
+            type="file"
+            accept="application/pdf"
+            onChange={
+              handleFileUpload
+            }
+            disabled={uploading}
+            hidden
+          />
 
         </div>
 
       </aside>
 
-
-      {/* =========================
+      {/* ==================================
           MAIN CHAT
-      ========================== */}
+      ================================== */}
 
       <main className="chat-main">
+
+        {/* ================================
+            HEADER
+        ================================= */}
 
         <header className="chat-header">
 
           <div>
-            <h1>Document Assistant</h1>
+
+            <h1>
+              Document Assistant
+            </h1>
 
             <span>
-              Ask questions about your documents
+              Ask questions about
+              your documents
             </span>
+
           </div>
 
           {currentChatId && (
@@ -283,15 +727,14 @@ function Chat() {
 
         </header>
 
-
-        {/* =========================
+        {/* ================================
             MESSAGES
-        ========================== */}
+        ================================= */}
 
         <div className="messages-container">
 
-          {messages.length === 0 ? (
-
+          {messages.length ===
+          0 ? (
             <div className="welcome-screen">
 
               <div className="welcome-icon">
@@ -303,9 +746,14 @@ function Chat() {
               </h2>
 
               <p>
-                Ask questions about your uploaded
-                company documents.
+                Ask questions about
+                your uploaded company
+                documents.
               </p>
+
+              {/* ==========================
+                  SUGGESTIONS
+              =========================== */}
 
               <div className="suggestions">
 
@@ -342,72 +790,93 @@ function Chat() {
               </div>
 
             </div>
-
           ) : (
+            messages.map(
+              (
+                message,
+                index
+              ) => (
 
-            messages.map((message, index) => (
+                <div
+                  key={index}
+                  className={`message-row ${message.role}`}
+                >
 
-              <div
-                key={index}
-                className={`message-row ${message.role}`}
-              >
-
-                <div className="message-avatar">
-                  {message.role === "user"
-                    ? "👤"
-                    : "🤖"}
-                </div>
-
-                <div className="message-content">
-
-                  <div className="message-bubble">
-                    {message.content}
+                  <div className="message-avatar">
+                    {message.role ===
+                    "user"
+                      ? "👤"
+                      : "🤖"}
                   </div>
 
+                  <div className="message-content">
 
-                  {/* Sources */}
+                    <div className="message-bubble">
+                      {
+                        message.content
+                      }
+                    </div>
 
-                  {message.sources &&
-                    message.sources.length > 0 && (
+                    {/* ======================
+                        SOURCES
+                    ======================= */}
 
-                      <div className="sources">
+                    {message.sources &&
+                      message.sources
+                        .length >
+                        0 && (
 
-                        <div className="sources-title">
-                          Sources
+                        <div className="sources">
+
+                          <div className="sources-title">
+                            Sources
+                          </div>
+
+                          {message.sources.map(
+                            (
+                              source,
+                              sourceIndex
+                            ) => (
+
+                              <div
+                                key={
+                                  sourceIndex
+                                }
+                                className="source-item"
+                              >
+
+                                📄{" "}
+                                {
+                                  source.filename
+                                }
+
+                                <span>
+                                  Chunk{" "}
+                                  {
+                                    source.chunkIndex
+                                  }
+                                </span>
+
+                              </div>
+
+                            )
+                          )}
+
                         </div>
 
-                        {message.sources.map(
-                          (source, sourceIndex) => (
+                      )}
 
-                            <div
-                              key={sourceIndex}
-                              className="source-item"
-                            >
-                              📄 {source.filename}
-
-                              <span>
-                                Chunk{" "}
-                                {source.chunkIndex}
-                              </span>
-                            </div>
-
-                          )
-                        )}
-
-                      </div>
-
-                    )}
+                  </div>
 
                 </div>
 
-              </div>
-
-            ))
-
+              )
+            )
           )}
 
-
-          {/* Loading */}
+          {/* ================================
+              TYPING INDICATOR
+          ================================= */}
 
           {loading && (
 
@@ -420,9 +889,11 @@ function Chat() {
               <div className="message-content">
 
                 <div className="typing-indicator">
+
                   <span></span>
                   <span></span>
                   <span></span>
+
                 </div>
 
               </div>
@@ -431,23 +902,35 @@ function Chat() {
 
           )}
 
-          <div ref={messagesEndRef} />
+          <div
+            ref={
+              messagesEndRef
+            }
+          />
 
         </div>
 
-
-        {/* =========================
-            INPUT
-        ========================== */}
+        {/* ================================
+            MESSAGE INPUT
+        ================================= */}
 
         <div className="input-container">
 
           <textarea
-            value={currentMessage}
-            onChange={(event) =>
-              setCurrentMessage(event.target.value)
+            value={
+              currentMessage
             }
-            onKeyDown={handleKeyDown}
+            onChange={(
+              event
+            ) =>
+              setCurrentMessage(
+                event.target
+                  .value
+              )
+            }
+            onKeyDown={
+              handleKeyDown
+            }
             placeholder="Ask something about your documents..."
             rows={1}
             disabled={loading}
@@ -455,7 +938,9 @@ function Chat() {
 
           <button
             className="send-button"
-            onClick={sendMessage}
+            onClick={
+              sendMessage
+            }
             disabled={
               loading ||
               !currentMessage.trim()
