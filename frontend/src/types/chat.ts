@@ -4,10 +4,18 @@ export interface Source {
     score: number;
   }
   
+  export interface AgentStep {
+    type: "tool" | "result" | "final";
+    tool?: string;
+    input?: string;
+    message: string;
+  }
+  
   export interface Message {
     role: "user" | "assistant";
     content: string;
     sources?: Source[];
+    agentSteps?: AgentStep[];
   }
   
   export interface ChatItem {

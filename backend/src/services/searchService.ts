@@ -1,42 +1,25 @@
 import { generateEmbedding } from "./embeddingService";
-import { DocumentChunk } from "../models/DocumentChunk";
+import { getAllDocumentChunks } from "./documentRepository";
+import { cosineSimilarity } from "../utils/similarity";
 
 export async function searchSimilarChunks(
   query: string,
-  topK: number = 3
+  topK: number = 5
 ) {
-  const queryEmbedding =
-    await generateEmbedding(query);
+  const queryEmbedding = await generateEmbedding(query);
 
-  const results =
-    await DocumentChunk.aggregate([
-      {
-        $vectorSearch: {
-          index: "vector_index",
-          path: "embedding",
-          queryVector: queryEmbedding,
-          numCandidates: Math.max(
-            topK * 10,
-            50
-          ),
-          limit: topK,
-        },
-      },
+  const chunks = await getAllDocumentChunks();
 
-      {
-        $project: {
-          _id: 1,
-          documentId: 1,
-          filename: 1,
-          chunkIndex: 1,
-          text: 1,
-
-          score: {
-            $meta: "vectorSearchScore",
-          },
-        },
-      },
-    ]);
+  const results = chunks
+    .map((chunk) => ({
+      ...chunk,
+      score: cosineSimilarity(
+        queryEmbedding,
+        chunk.embedding
+      ),
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, topK);
 
   return results;
 }

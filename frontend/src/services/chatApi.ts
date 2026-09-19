@@ -1,10 +1,13 @@
 import type {
     ChatItem,
-    Message,
+    AgentStep,
   } from "../types/chat";
   
-  const API_URL =
-    "http://localhost:5000/api";
+  const API_URL = "http://localhost:5000/api";
+  
+  // ---------------------------------------
+  // Get all chats
+  // ---------------------------------------
   
   export async function getChats(): Promise<
     ChatItem[]
@@ -22,6 +25,10 @@ import type {
     return response.json();
   }
   
+  // ---------------------------------------
+  // Get single chat
+  // ---------------------------------------
+  
   export async function getChat(
     chatId: string
   ): Promise<ChatItem> {
@@ -38,10 +45,18 @@ import type {
     return response.json();
   }
   
+  // ---------------------------------------
+  // Existing chat API
+  // ---------------------------------------
+  
   interface SendMessageResponse {
     chatId: string;
     answer: string;
-    sources: Message["sources"];
+    sources?: {
+      filename: string;
+      chunkIndex: number;
+      score: number;
+    }[];
   }
   
   export async function sendChatMessage(
@@ -53,8 +68,7 @@ import type {
       {
         method: "POST",
         headers: {
-          "Content-Type":
-            "application/json",
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           message,
@@ -63,13 +77,49 @@ import type {
       }
     );
   
-    const data =
-      await response.json();
+    const data = await response.json();
   
     if (!response.ok) {
       throw new Error(
         data.error ||
           "Something went wrong"
+      );
+    }
+  
+    return data;
+  }
+  
+  // ---------------------------------------
+  // Agent API
+  // ---------------------------------------
+  
+  export interface AgentResponse {
+    answer: string;
+    steps: AgentStep[];
+  }
+  
+  export async function sendAgentMessage(
+    message: string
+  ): Promise<AgentResponse> {
+    const response = await fetch(
+      `${API_URL}/agent`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message,
+        }),
+      }
+    );
+  
+    const data = await response.json();
+  
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "Agent request failed"
       );
     }
   
