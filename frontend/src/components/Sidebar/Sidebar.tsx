@@ -4,30 +4,34 @@ import ChatHistory from "./ChatHistory";
 import DocumentList from "./DocumentList";
 
 interface SidebarProps {
-  chats: ChatItem[];
-  documents: DocumentItem[];
-  currentChatId: string | null;
-  uploading: boolean;
-  isOpen: boolean;
-  onNewChat: () => void;
-  onChatSelect: (chatId: string) => void;
-  onUpload: (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => void;
-  onClose: () => void;
-}
+    chats: ChatItem[];
+    documents: DocumentItem[];
+    currentChatId: string | null;
+    uploading: boolean;
+    deletingDocumentId: string | null;
+    isOpen: boolean;
+    onNewChat: () => void;
+    onChatSelect: (chatId: string) => void;
+    onUpload: (
+      event: React.ChangeEvent<HTMLInputElement>
+    ) => void;
+    onDeleteDocument: (documentId: string) => void;
+    onClose: () => void;
+  }
 
-function Sidebar({
-  chats,
-  documents,
-  currentChatId,
-  uploading,
-  isOpen,
-  onNewChat,
-  onChatSelect,
-  onUpload,
-  onClose,
-}: SidebarProps) {
+  function Sidebar({
+    chats,
+    documents,
+    currentChatId,
+    uploading,
+    deletingDocumentId,
+    isOpen,
+    onNewChat,
+    onChatSelect,
+    onUpload,
+    onDeleteDocument,
+    onClose,
+  }: SidebarProps)  {
   return (
     <>
       {/* Mobile overlay */}
@@ -127,9 +131,11 @@ function Sidebar({
 
         {/* Documents */}
         <DocumentList
-          documents={documents}
-          uploading={uploading}
-          onUpload={onUpload}
+        documents={documents}
+        uploading={uploading}
+        deletingDocumentId={deletingDocumentId}
+        onUpload={onUpload}
+        onDelete={onDeleteDocument}
         />
 
       </aside>
